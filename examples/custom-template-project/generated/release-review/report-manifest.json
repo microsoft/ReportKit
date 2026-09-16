@@ -13,9 +13,26 @@
   "pageCount": 1,
   "reportId": "release-review-public-sample",
   "reportKitVersion": "0.1.0",
+  "reproducibility": {
+    "artifactHashes": {
+      ".reportkit-output.json": "sha256:26eea2e22bae93668a1f5a31e45d7af43a2f02139ba5f90e273dcd38f9c2a880",
+      "index.html": "sha256:ff28f72dfc6743f547a980125776953b67aff8e1f10c80ccd2a5516ea8b37155",
+      "validation-report.json": "sha256:670d094232ce6ae6bad4009eb0e87cf488209d746587dd5926a4ab7e56dac69d"
+    },
+    "canonicalModelDigest": "sha256:d02de7474de85d003847ac91d5da953ae9bfe1f1e6f379290bd4849ae667d576",
+    "configurationDigest": "sha256:471beca41c97106a2e89cf1d59cf05a8783fe5a86b6dc33a48292a93b7240516",
+    "renderer": {
+      "digest": "sha256:992ef376f6e1d54f15a0510921deb7d6024dc2fdafb1837b0f20f410fae4ea6b",
+      "id": "reportkit-python"
+    },
+    "sourceIdentifiers": [
+      "adapter:public-release-sample@1.0",
+      "source:synthetic:Release readiness snapshot"
+    ]
+  },
   "schemaVersion": "1.0",
   "template": {
-    "digest": "sha256:7c396ddc6fe3e7fc803e51ba9a4a803aafa86e6b2ddb073668e803f134190e19",
+    "digest": "sha256:4f90373ebbfb47dcb739f43ca6b708ee51d871760aff4fb22ea8d8b6c151b36a",
     "id": "contoso/release-review",
     "kind": "declarative",
     "source": "project",

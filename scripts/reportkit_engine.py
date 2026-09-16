@@ -1,4 +1,4 @@
-"""Dependency-free ReportKit v1 validation and Executive Health generation."""
+"""Dependency-free ReportKit validation and built-in report-site generation."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import os
 import re
 import shutil
 import stat
-from collections import Counter
+from collections import Counter, deque
 from datetime import datetime, timezone
 from html import escape
 from html.parser import HTMLParser
@@ -20,6 +20,9 @@ from json_schema import validate_instance
 
 REPORTKIT_VERSION = "0.1.0"
 SCHEMA_VERSION = "1.0"
+MAX_JSON_BYTES = 16 * 1024 * 1024
+MAX_JSON_DEPTH = 64
+MAX_JSON_NODES = 200000
 SCHEMA_ROOT = Path(__file__).resolve().parents[1] / "schema"
 VALID_STATUSES = {
     "healthy", "warning", "critical", "unknown", "not-applicable", "blocked",
@@ -57,18 +60,46 @@ REQUIRED_CSP = (
     "font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
 )
 OUTPUT_MARKER = ".reportkit-output.json"
+BUILTIN_TEMPLATE_IDS = (
+    "executive-health", "action-risk", "portfolio-team", "operational-health", "compliance-readiness",
+)
 
 
 def normalize_text_bytes(content: bytes) -> bytes:
     return content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
 
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as stream:
-        value = json.load(stream)
+def load_json_bytes(content: bytes, source: str = "JSON document") -> dict[str, Any]:
+    if len(content) > MAX_JSON_BYTES:
+        raise ValueError(f"{source} exceeds the {MAX_JSON_BYTES}-byte limit")
+    try:
+        text = content.decode("utf-8")
+        value = json.loads(
+            text,
+            parse_constant=lambda token: (_ for _ in ()).throw(ValueError(f"non-finite number '{token}'")),
+        )
+    except UnicodeDecodeError as exception:
+        raise ValueError(f"{source} must be UTF-8") from exception
+    except RecursionError as exception:
+        raise ValueError(f"{source} exceeds the supported nesting depth") from exception
     if not isinstance(value, dict):
-        raise ValueError(f"{path} must contain a JSON object")
+        raise ValueError(f"{source} must contain a JSON object")
+    pending = [(value, 0)]
+    nodes = 0
+    while pending:
+        current, depth = pending.pop()
+        nodes += 1
+        if nodes > MAX_JSON_NODES or depth > MAX_JSON_DEPTH:
+            raise ValueError(f"{source} exceeds the supported size or nesting budget")
+        if isinstance(current, dict):
+            pending.extend((child, depth + 1) for child in current.values())
+        elif isinstance(current, list):
+            pending.extend((child, depth + 1) for child in current)
     return value
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    return load_json_bytes(path.read_bytes(), str(path))
 
 
 def write_json(path: Path, value: dict[str, Any]) -> None:
@@ -443,16 +474,58 @@ def validate_model_semantics(model: dict[str, Any], capability: dict[str, Any]) 
         for group_id in item.get("groupIds", []):
             if group_id not in group_ids:
                 errors.append(message("unresolved-group", f"Unknown group ID '{group_id}'.", f"items[{index}].groupIds"))
+            else:
+                group = next(group for group in model.get("groups", []) if group.get("id") == group_id)
+                if "itemIds" in group and item["id"] not in group["itemIds"]:
+                    errors.append(message(
+                        "group-item-mismatch",
+                        f"Item '{item['id']}' references group '{group_id}', but the group does not reference the item.",
+                        f"items[{index}].groupIds",
+                    ))
     for index, group in enumerate(model.get("groups", [])):
         for item_id in group.get("itemIds", []):
             if item_id not in item_ids:
                 errors.append(message("unresolved-item", f"Unknown item ID '{item_id}'.", f"groups[{index}].itemIds"))
+            else:
+                item = next(item for item in model.get("items", []) if item.get("id") == item_id)
+                if "groupIds" in item and group["id"] not in item["groupIds"]:
+                    errors.append(message(
+                        "group-item-mismatch",
+                        f"Group '{group['id']}' references item '{item_id}', but the item does not reference the group.",
+                        f"groups[{index}].itemIds",
+                    ))
         for metric_id in group.get("metricIds", []):
             if metric_id not in metric_ids:
                 errors.append(message("unresolved-metric", f"Unknown metric ID '{metric_id}'.", f"groups[{index}].metricIds"))
         for child_id in group.get("childGroupIds", []):
             if child_id not in group_ids:
                 errors.append(message("unresolved-group", f"Unknown child group ID '{child_id}'.", f"groups[{index}].childGroupIds"))
+    for index, highlight in enumerate(model.get("highlights", [])):
+        for group_id in highlight.get("groupIds", []):
+            if group_id not in group_ids:
+                errors.append(message("unresolved-group", f"Unknown group ID '{group_id}'.", f"highlights[{index}].groupIds"))
+        for item_id in highlight.get("itemIds", []):
+            if item_id not in item_ids:
+                errors.append(message("unresolved-item", f"Unknown item ID '{item_id}'.", f"highlights[{index}].itemIds"))
+
+    children = {group["id"]: group.get("childGroupIds", []) for group in model.get("groups", [])}
+    indegree = dict.fromkeys(children, 0)
+    for references in children.values():
+        for child in references:
+            if child in indegree:
+                indegree[child] += 1
+    ready = deque(sorted(identifier for identifier, count in indegree.items() if count == 0))
+    visited = 0
+    while ready:
+        identifier = ready.popleft()
+        visited += 1
+        for child in children[identifier]:
+            if child in indegree:
+                indegree[child] -= 1
+                if indegree[child] == 0:
+                    ready.append(child)
+    if visited != len(children):
+        errors.append(message("group-cycle", "Child group references must not contain cycles.", "groups"))
 
     report = model.get("report", {})
     generated = datetime.fromisoformat(report["generatedAt"].replace("Z", "+00:00"))
@@ -460,13 +533,35 @@ def validate_model_semantics(model: dict[str, Any], capability: dict[str, Any]) 
     if data_as_of > generated:
         errors.append(message("future-data", "dataAsOf cannot be later than generatedAt.", "report.dataAsOf"))
 
-    raw_count = model.get("provenance", {}).get("recordCounts", {}).get("raw")
-    if raw_count is not None and raw_count != len(model.get("items", [])):
+    provenance = model.get("provenance", {})
+    record_counts = provenance.get("recordCounts", {})
+    canonical_count = record_counts.get("canonicalItems")
+    if canonical_count is not None and canonical_count != len(model.get("items", [])):
         errors.append(message(
-            "raw-count-mismatch",
-            f"provenance.recordCounts.raw is {raw_count}, but items contains {len(model.get('items', []))} records.",
-            "provenance.recordCounts.raw",
+            "canonical-count-mismatch",
+            f"provenance.recordCounts.canonicalItems is {canonical_count}, but items contains {len(model.get('items', []))} records.",
+            "provenance.recordCounts.canonicalItems",
         ))
+    raw_count = record_counts.get("raw")
+    declared_source_total = record_counts.get("sourceTotal")
+    source_counts = [
+        source.get("recordCount") for source in provenance.get("sources", [])
+        if isinstance(source, dict)
+    ]
+    if declared_source_total is not None and source_counts and all(isinstance(count, int) for count in source_counts):
+        source_total = sum(source_counts)
+        if declared_source_total != source_total:
+            errors.append(message(
+                "source-count-mismatch",
+                f"provenance.recordCounts.sourceTotal is {declared_source_total}, but source recordCount values total {source_total}.",
+                "provenance.recordCounts.sourceTotal",
+            ))
+        if raw_count is not None and raw_count != declared_source_total:
+            errors.append(message(
+                "source-count-mismatch",
+                f"provenance.recordCounts.raw is {raw_count}, but sourceTotal is {declared_source_total}.",
+                "provenance.recordCounts.raw",
+            ))
 
     if not model.get("trends"):
         warnings.append(message("missing-trends", "No trend history is available.", "trends"))
@@ -504,7 +599,8 @@ def validate_model(model: dict[str, Any], capability: dict[str, Any]) -> dict[st
 
 def _format_datetime(value: str) -> str:
     instant = datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
-    return instant.strftime("%d %b %Y, %H:%M UTC")
+    months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    return f"{instant.day:02d} {months[instant.month - 1]} {instant.year:04d}, {instant.hour:02d}:{instant.minute:02d} UTC"
 
 
 def _freshness(model: dict[str, Any], config: dict[str, Any]) -> tuple[str, str]:
@@ -590,11 +686,13 @@ def render_executive_health(model: dict[str, Any], config: dict[str, Any]) -> st
 
     trend = next(iter(sorted(model.get("trends", []), key=lambda item: (item.get("order", 9999), item["id"]))), None)
     trend_html = '<div class="empty-state">No trend history is available.</div>'
+    trend_description = "No dated observations supplied"
     if trend:
         observations = trend["observations"]
-        maximum = max((observation["value"] for observation in observations), default=1)
+        maximum = max((abs(observation["value"]) for observation in observations), default=0) or 1
+        trend_description = f"{trend['label']} ({trend['unit']})"
         trend_html = '<div class="trend" role="img" aria-label="' + escape(trend["label"]) + '">' + "".join(
-            f'<div><span class="trend-bar" style="height:{max(6, (observation["value"] / maximum) * 100):.1f}%"></span>'
+            f'<div><span class="trend-bar" title="{escape(str(observation["value"]))} {escape(trend["unit"])}" style="height:{abs(observation["value"]) / maximum * 100:.1f}%"></span>'
             f'<small>{escape(observation["date"][5:])}</small><strong>{escape(str(observation["value"]))}</strong></div>'
             for observation in observations
         ) + "</div>"
@@ -635,7 +733,7 @@ def render_executive_health(model: dict[str, Any], config: dict[str, Any]) -> st
   <main id="main" class="shell">
     <section class="metrics" aria-label="Key metrics">{metric_html}</section>
     <div class="grid">
-      <section id="trend" class="card"><h2>Health trend</h2><p class="section-copy">Explicitly dated canonical observations</p>{trend_html}</section>
+      <section id="trend" class="card"><h2>Health trend</h2><p class="section-copy">{escape(trend_description)}</p>{trend_html}</section>
       <aside id="signals" class="card"><h2>Confirmed signals</h2><p class="section-copy">Changes supplied by the source adapter</p><ul class="signals">{highlight_html}</ul></aside>
     </div>
     <section id="attention" class="card attention"><h2>Leadership attention</h2><p class="section-copy">Highest-priority records ordered by priority, due date, and stable ID</p><table><caption class="skip">Leadership decisions requiring attention</caption><thead><tr><th>Decision or risk</th><th>Priority</th><th>Accountable owner</th><th>Due</th><th>Next action</th></tr></thead><tbody>{decision_rows}</tbody></table></section>
@@ -768,6 +866,9 @@ def _first_reparse_component(path: Path) -> Path | None:
 
 
 def validate_site(site: Path, expected_item_count: int | None = None) -> dict[str, Any]:
+    from artifact_identity import verify_identity
+    from site_inventory import inspect_site_inventory
+
     errors: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
     info: list[dict[str, str]] = []
@@ -775,6 +876,10 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
     redirected = _first_reparse_component(site)
     if redirected is not None:
         errors.append(message("site-path-redirection", "Site path cannot contain a symbolic link, junction, or reparse point.", str(redirected)))
+        return validation_report(errors, warnings, info)
+    inventory_files, inventory_errors = inspect_site_inventory(site)
+    errors.extend(inventory_errors)
+    if inventory_errors:
         return validation_report(errors, warnings, info)
     index = site / "index.html"
     manifest_path = site / "report-manifest.json"
@@ -787,7 +892,9 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
     if not validation_path.is_file():
         errors.append(message("missing-validation-report", "Generated site is missing validation-report.json.", "validation-report.json"))
 
-    html_files = sorted(site.rglob("*.html"))
+    html_files = sorted(
+        path for path in inventory_files if path.suffix.lower() in {".html", ".htm"}
+    )
     parsed_pages: dict[Path, SiteParser] = {}
     for page in html_files:
         relative = page.relative_to(site).as_posix()
@@ -838,7 +945,7 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
             if not target.is_file():
                 errors.append(message("broken-link", f"Reference '{reference}' does not resolve.", relative))
                 continue
-            if parsed.fragment and target.suffix.lower() == ".html":
+            if parsed.fragment and target.suffix.lower() in {".html", ".htm"}:
                 target_parser = parsed_pages.get(target.resolve())
                 if target_parser is None:
                     try:
@@ -851,14 +958,8 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
 
     manifest = _load_json_for_validation(manifest_path, errors) if manifest_path.is_file() else None
     validation = _load_json_for_validation(validation_path, errors) if validation_path.is_file() else None
-    actual_files = {
-        path.relative_to(site).as_posix()
-        for path in site.rglob("*")
-        if path.is_file()
-    }
-    for asset in sorted(site.rglob("*")):
-        if not asset.is_file():
-            continue
+    actual_files = {path.relative_to(site).as_posix() for path in inventory_files}
+    for asset in inventory_files:
         relative = asset.relative_to(site).as_posix()
         if asset.suffix.lower() == ".css":
             try:
@@ -983,6 +1084,7 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
                 or f'data-template-version="{escape(template_version)}"' not in index_text
             ):
                 errors.append(message("manifest-template-mismatch", "Manifest template identity does not match index.html.", "report-manifest.json.template"))
+        errors.extend(verify_identity(manifest, site, inventory_files))
 
     if validation is not None:
         errors.extend(validate_instance(
@@ -1142,10 +1244,10 @@ def build_site(
     combined_input_report = merge_reports(model_report, config_report)
     if combined_input_report["errors"]:
         return combined_input_report
-    if capability["id"] != "executive-health":
+    if capability["id"] not in BUILTIN_TEMPLATE_IDS:
         return validation_report([message(
             "template-not-implemented",
-            f"Template '{capability['id']}' is not connected to the v1 engine yet.",
+            f"Template '{capability['id']}' is not a supported built-in renderer.",
             "template.id",
         )])
 
@@ -1153,10 +1255,20 @@ def build_site(
     if output_report["errors"]:
         return output_report
     assert temporary is not None and backup is not None
+    if capability["id"] == "executive-health":
+        pages = {"index.html": render_executive_health(model, config)}
+    else:
+        from builtin_renderers import render_builtin_pages
+        pages = render_builtin_pages(capability["id"], model, config)
+    if "index.html" not in pages or any(
+        not isinstance(name, str) or not name.endswith(".html")
+        or "/" in name or "\\" in name or _safe_relative_path(temporary, temporary, name) is None
+        for name in pages
+    ):
+        return validation_report([message("renderer-page-path", "Renderer must return safe, flat HTML filenames with index.html.")])
     temporary.mkdir(parents=True)
-
-    html_text = render_executive_health(model, config)
-    (temporary / "index.html").write_text(html_text, encoding="utf-8", newline="\n")
+    for name, html_text in sorted(pages.items()):
+        (temporary / name).write_text(html_text, encoding="utf-8", newline="\n")
     write_json(temporary / OUTPUT_MARKER, {
         "markerVersion": "1.0",
         "managedBy": "ReportKit",
@@ -1179,9 +1291,9 @@ def build_site(
         "generatedAt": model["report"]["generatedAt"],
         "dataAsOf": model["report"]["dataAsOf"],
         "classification": model["report"]["classification"],
-        "pageCount": 1,
+        "pageCount": len(pages),
         "itemCount": len(model.get("items", [])),
-        "files": [OUTPUT_MARKER, "index.html", "report-manifest.json", "validation-report.json"],
+        "files": [OUTPUT_MARKER, *sorted(pages), "report-manifest.json", "validation-report.json"],
         "validation": {
             "status": preliminary["status"],
             "errors": preliminary["summary"]["errorCount"],
@@ -1189,6 +1301,9 @@ def build_site(
             "info": preliminary["summary"]["infoCount"],
         },
     }
+    write_json(temporary / "report-manifest.json", manifest)
+    from artifact_identity import make_reproducibility
+    manifest["reproducibility"] = make_reproducibility(model, config, temporary)
     write_json(temporary / "report-manifest.json", manifest)
 
     site_report = validate_site(temporary, len(model.get("items", [])))
@@ -1200,7 +1315,12 @@ def build_site(
         "info": final_report["summary"]["infoCount"],
     }
     write_json(temporary / "validation-report.json", final_report)
+    manifest["reproducibility"] = make_reproducibility(model, config, temporary)
     write_json(temporary / "report-manifest.json", manifest)
+    final_site_report = validate_site(temporary, len(model.get("items", [])))
+    if final_site_report["errors"]:
+        shutil.rmtree(temporary)
+        return merge_reports(final_report, final_site_report)
     if final_report["errors"]:
         shutil.rmtree(temporary)
         return final_report

@@ -8,36 +8,44 @@ It is designed for teams whose reporting is trapped in recurring email, presenta
 
 ReportKit is **a skill and reporting contract**, not a hosted service and not a package that users must deploy. The repository contains the skill instructions, canonical data contract, reusable report templates, validation rules, examples, and supporting generation scripts.
 
-> **Experimental status:** ReportKit is an open-source Hack Week project. Executive Health is the
-> current generated vertical slice; the other four reports shown below are approved static
-> prototypes awaiting connection to the deterministic engine.
+> **Experimental status:** ReportKit is an open-source Hack Week project with all five built-in
+> renderers and a single-page declarative custom-template foundation. Validation remains a baseline,
+> not production certification. Publishing, a generic CSV adapter, executable guided init/resume,
+> and Pages deployment are not implemented.
 
 ![Executive Health report showing portfolio status, freshness, metrics, trend, and confirmed signals](docs/assets/screenshots/executive-health-hero.png)
 
-| Five report designs | Static-first | Deterministic validation |
+| Five generated reports | Static-first | Deterministic validation |
 |---|---|---|
-| Executive Health is generated today; four clearly labeled prototypes illustrate the remaining audience designs. | Core content and navigation work without a backend or required JavaScript. | Explicit inputs produce stable output that is validated before publication. |
+| Five built-in renderers use the same public canonical snapshot. | Core content and navigation work without a backend or required JavaScript. | Explicit inputs produce stable output with model and site validation. |
 
-## One generated report, five report designs
+## One canonical source, five generated reports
 
 | Leadership | Operations |
 |---|---|
-| [![Executive Health](docs/assets/screenshots/executive-health-hero.png)](examples/operational-snapshot/generated/executive-health/index.html) | [![Action and Risk](docs/assets/screenshots/action-risk-hero.png)](templates/action-risk/action-risk.html) |
+| [![Executive Health](docs/assets/screenshots/executive-health-hero.png)](examples/operational-snapshot/generated/executive-health/index.html) | [![Action and Risk](docs/assets/screenshots/action-risk-hero.png)](examples/operational-snapshot/generated/action-risk/index.html) |
 | **Are we healthy?** | **What must happen next?** |
 
 | Management | Reliability | Assurance |
 |---|---|---|
-| [![Portfolio and Team](docs/assets/screenshots/portfolio-team-hero.png)](templates/portfolio-team/portfolio-team.html) | [![Operational Health](docs/assets/screenshots/operational-health-hero.png)](templates/operational-health/operational-health.html) | [![Compliance Readiness](docs/assets/screenshots/compliance-readiness-hero.png)](templates/compliance-readiness/compliance-readiness.html) |
+| [![Portfolio and Team](docs/assets/screenshots/portfolio-team-hero.png)](examples/operational-snapshot/generated/portfolio-team/index.html) | [![Operational Health](docs/assets/screenshots/operational-health-hero.png)](examples/operational-snapshot/generated/operational-health/index.html) | [![Compliance Readiness](docs/assets/screenshots/compliance-readiness-hero.png)](examples/operational-snapshot/generated/compliance-readiness/index.html) |
 | **Where is risk concentrated?** | **What regressed?** | **Can we proceed?** |
 
-[Watch the 36-second silent walkthrough](docs/assets/reportkit-walkthrough.mp4) ·
+[Archived 36-second design walkthrough](docs/assets/reportkit-walkthrough.mp4) ·
 [View the architecture diagram](docs/assets/reportkit-architecture.svg) ·
 [Open the local showcase](showcase/index.html)
 
-GitHub displays checked-in `.html` links as source until static hosting is configured. Clone or
-download the repository and open the local showcase to review the rendered pages.
+GitHub displays checked-in `.html` links as source, not a browser preview. Clone or download the
+repository and open `showcase/index.html` locally to review the rendered pages. GitHub Pages is
+not configured or deployed.
+
+The archived video predates completion of the additional renderers. Use the generated reports
+and refreshed screenshots for current implementation review.
 
 ## 60-second quick start
+
+Run these commands from the repository root, or from the installed skill root after following
+[skill installation](#1-make-the-skill-available). Python 3.10 or later is required.
 
 ```powershell
 python scripts\validate `
@@ -55,6 +63,54 @@ python scripts\validate report-site --kind site
 ```
 
 Open `report-site\index.html`. No server or package installation is required.
+
+### Choose any built-in renderer
+
+Use one of these `--template` IDs with the same
+`examples\operational-snapshot\canonical-report.json` and the matching configuration:
+
+| Template ID | Sample configuration | Generated example (HTML source on GitHub) |
+|---|---|---|
+| `executive-health` | `executive-health.config.json` | [Executive Health](examples/operational-snapshot/generated/executive-health/index.html) |
+| `action-risk` | `action-risk.config.json` | [Action & Risk](examples/operational-snapshot/generated/action-risk/index.html) |
+| `portfolio-team` | `portfolio-team.config.json` | [Portfolio / Team](examples/operational-snapshot/generated/portfolio-team/index.html) |
+| `operational-health` | `operational-health.config.json` | [Operational Health](examples/operational-snapshot/generated/operational-health/index.html) |
+| `compliance-readiness` | `compliance-readiness.config.json` | [Compliance / Readiness](examples/operational-snapshot/generated/compliance-readiness/index.html) |
+
+Configuration files are under `examples\operational-snapshot`. Change both `--template` and
+`--config` in the quick start; use a fresh output directory for each report. Existing ReportKit
+output requires explicit replacement approval and `--overwrite`; never replace an unrelated folder.
+
+To regenerate all checked-in public examples after explicitly approving replacement of their
+ReportKit-owned output folders:
+
+```powershell
+python -B scripts\build-examples --overwrite
+```
+
+This uses the same canonical source and the checked-in per-template configurations. All five
+built-ins require the `report` section; absent or empty optional arrays produce honest empty states.
+Invalid group cycles are rejected rather than recursively rendered.
+
+Action & Risk provides real static **All attention**, **Overdue**, **Blocked**, and **Due in seven
+days** views, plus **All records**. All attention selects `warning`, `critical`, `blocked`, `failed`,
+`in-progress`, `pending-review`, or `not-started` status, or an explicit nonblank blocker—not an
+invented open/closed lifecycle. Date queues use the UTC date of explicit `generatedAt`: overdue
+is strictly earlier, and due in seven days includes today through today + 7. Healthy/passed/
+complete/not-applicable records are excluded from date queues unless they have an explicit blocker.
+Queues overlap and are not additive.
+
+Portfolio / Team generates a detail page for every canonical group. Membership includes explicit
+group/item references and descendants, deduplicated per group; overlapping groups are not additive.
+Missing source concepts remain explicit rather than becoming invented health or readiness facts.
+
+The current self-contained policy rejects external hyperlinks as well as external assets.
+Source/evidence HTTP(S) references are displayed as escaped text, not clickable external links;
+only generated report navigation is clickable. Unsupported destinations remain unavailable.
+
+All five examples preserve the same 401 source-record units. Operational Health and Compliance /
+Readiness organize available canonical facts; they do not fabricate service availability, control
+pass rates, exceptions, or approval decisions when the source does not provide them.
 
 ### Bring your own declarative template
 
@@ -74,6 +130,9 @@ Declarative packs compose approved ReportKit components without executable HTML,
 or renderer code. Their immutable SHA-256 identity is recorded in project state, the lock file, and
 the generated manifest. Text-file line endings are normalized before digesting so the same pack
 retains its identity across Windows and Linux checkouts.
+
+Custom configuration schemas use a bounded, restricted JSON Schema subset—not universal
+conformance. See [schema and pattern limits](docs/custom-templates-guided-build.md#configuration-schema-limits).
 
 ## Why ReportKit?
 
@@ -142,7 +201,9 @@ ReportKit is source-neutral. Azure DevOps, GitHub, CSV, JSON, service-health sys
 
 ## The five templates
 
-ReportKit v1 defines five reporting templates. Templates are selected by the decision the reader needs to make, not by the source system that supplied the data.
+ReportKit implements five experimental built-in reporting templates. Templates are selected by the
+decision the reader needs to make, not by the source system that supplied the data. The content
+below describes audience needs; a renderer can show only facts supplied by the canonical model.
 
 | Template | Primary audience | Primary decision | Typical content |
 |---|---|---|---|
@@ -177,6 +238,10 @@ flowchart TD
     G --> H[File-copy publisher]
 ```
 
+This diagram includes the planned publisher; current execution ends with validated local files.
+The adapter box is a design boundary: source JSON/CSV mapping currently remains manual and
+agent-assisted, not an executable generic connector.
+
 The layers have intentionally narrow responsibilities:
 
 | Layer | Knows about | Must not do |
@@ -194,18 +259,76 @@ ReportKit is intended to be used by an agent that can read the repository’s `S
 
 ### 1. Make the skill available
 
-Clone or download this repository and make `SKILL.md` available through the skill mechanism supported by your agent environment.
+For GitHub Copilot CLI, install the **entire repository** in a lowercase `reportkit` skill
+directory. Do not copy `SKILL.md` alone: it depends on the adjacent `scripts/`, `schema/`,
+`docs/`, `agents/`, `templates/`, and `examples/` directories. This is folder-based skill
+installation, not a language-package installation.
 
-```bash
-git clone https://github.com/microsoft/ReportKit.git
-cd ReportKit
+Choose **one** of the following PowerShell alternatives. Do not install both copies for the same
+session. Both examples refuse to replace an existing folder; inspect and deliberately update an
+existing installation instead of blindly overwriting it.
+
+**Project skill:** start at the root of the project where you want to use ReportKit:
+
+```powershell
+$skillRoot = Join-Path (Get-Location) '.github\skills\reportkit'
+if (Test-Path -LiteralPath $skillRoot) { throw 'Skill folder already exists; inspect it before updating.' }
+New-Item -ItemType Directory -Force -Path (Split-Path $skillRoot) | Out-Null
+git clone https://github.com/microsoft/ReportKit.git "$skillRoot"
+if ($LASTEXITCODE -ne 0) { throw 'Clone failed.' }
 ```
 
-There is no requirement to publish or install ReportKit as a language package. Supporting scripts may use standard development runtimes, but the product surface is the skill, contracts, templates, and generated static output.
+**Personal skill:** available across projects in your home directory:
+
+```powershell
+$skillRoot = Join-Path $HOME '.copilot\skills\reportkit'
+if (Test-Path -LiteralPath $skillRoot) { throw 'Skill folder already exists; inspect it before updating.' }
+New-Item -ItemType Directory -Force -Path (Split-Path $skillRoot) | Out-Null
+git clone https://github.com/microsoft/ReportKit.git "$skillRoot"
+if ($LASTEXITCODE -ne 0) { throw 'Clone failed.' }
+```
+
+A downloaded repository works too: place its complete contents directly inside the chosen
+`reportkit` folder, with `reportkit\SKILL.md` at the top level, not an extra nested repository folder.
+Keep the installation's nested Git metadata out of the host project's commits.
+
+Start `copilot` from the **host project's root** for project-skill discovery, not from the nested
+cloned skill repository. Personal skills are available across projects. Inside that interactive
+Copilot CLI session, verify discovery and explicitly invoke the skill:
+
+```text
+/skills reload
+/skills info reportkit
+Use the /reportkit skill.
+```
+
+The first two lines are CLI commands; the last is a prompt using GitHub's documented skill-name
+syntax. Confirm that `info` reports the intended installation. An unqualified start displays
+exactly three numbered choices and stops:
+
+1. Start a new report
+2. Inspect an existing ReportKit project and continue manually
+3. Validate a custom template
+
+Choice 2 does not automate resume or follow project-file references; choice 3 validates a local
+folder/ZIP and does not install it. Source JSON/CSV mapping remains manual and agent-assisted.
+Run all relative build/validation commands from the **installed skill root**, not the host project.
+Resolve explicitly approved data/output paths before switching directories.
+
+In the shell running the helper commands, set the working directory to the chosen installation
+first (use the `$skillRoot` value from the installation example; re-establish it in a new shell):
+
+```powershell
+Set-Location -LiteralPath $skillRoot
+```
+
+Official guidance: [Adding agent skills for GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
+and [About agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills).
 
 ## Repository status at a glance
 
-ReportKit is an early open-source Hack Week project. The repository currently provides one working end-to-end vertical slice and four additional approved visual prototypes.
+ReportKit is an early open-source Hack Week project with five built-in renderers and generated
+examples from one canonical source. Completion of those renderers does not close every v1 release gate.
 
 | Capability | Current state |
 |---|---|
@@ -213,16 +336,21 @@ ReportKit is an early open-source Hack Week project. The repository currently pr
 | Canonical schema 1.0 | Available |
 | Configuration, capability, manifest, and validation schemas | Available |
 | Executive Health deterministic generation | Implemented |
-| Executive Health model and generated-site validation | Implemented baseline |
-| Action & Risk visual prototype | Complete; generator connection pending |
-| Portfolio / Team visual prototype and linked team pages | Complete; generator connection pending |
-| Operational Health visual prototype | Complete; generator connection pending |
-| Compliance / Readiness visual prototype | Complete; generator connection pending |
+| Built-in model and generated-site validation | Implemented baseline |
+| Action & Risk generation and static filters | Implemented |
+| Portfolio / Team generation and all-group detail pages | Implemented |
+| Operational Health generation | Implemented from canonical facts |
+| Compliance / Readiness generation | Implemented from canonical facts |
+| Declarative custom templates | Locked, single-page foundation |
 | Synthetic 401-record sample | Available |
 | Safe file-copy publisher | Not implemented yet |
+| Generic CSV adapter / executable mapping engine | Not implemented; manual agent-assisted mapping only |
+| Executable guided init/resume | Not implemented; project-state examples only |
+| GitHub Pages deployment | Not implemented or deployed |
 | Published language package | Intentionally not part of the product |
 
-The prototype pages demonstrate the approved design direction. They are not generated customer reports and must not be mistaken for completed renderer support.
+Legacy prototype pages remain archived design references, not built-in renderer output. The Action
+& Risk interaction prototype is canonical-populated; other archived values are illustrative.
 
 ## Prerequisites
 
@@ -328,12 +456,17 @@ Another example:
 Use the ReportKit Portfolio / Team template for this canonical model.
 Generate one overview page and one static page for each team.
 Show freshness, classification, coverage, and management actions.
-Fail if team totals do not reconcile with the portfolio totals.
+Reconcile unique records, group membership, and portfolio totals without summing overlapping groups.
 ```
 
 ### 4. Review the result
 
-A successful run returns a complete static report directory, its manifest, and its validation report. Publication is a separate, explicit operation.
+A successful run returns clickable `index.html`, `report-manifest.json`, and
+`validation-report.json` links to verified, actual existing output paths. Include a ZIP link only
+when a ZIP was requested, created, and verified. These are local-file links, not a publication
+claim. If your client blocks local links, open the file in a browser or use a user-approved local
+server bound to loopback for the report folder. A GitHub HTML source link is not a live report;
+Pages deployment is not implemented. Publication remains a separate, explicit manual operation.
 
 ## Canonical data model
 
@@ -356,7 +489,7 @@ ReportKit templates consume a generic, schema-versioned model rather than source
     },
     "generatedAt": "2026-09-15T18:00:00Z",
     "dataAsOf": "2026-09-15T17:55:00Z",
-    "classification": "Internal"
+    "classification": "Public sample"
   },
   "metrics": [],
   "groups": [],
@@ -364,7 +497,11 @@ ReportKit templates consume a generic, schema-versioned model rather than source
   "trends": [],
   "highlights": [],
   "links": [],
-  "provenance": {}
+  "provenance": {
+    "adapter": {"id": "synthetic-manual-mapping", "version": "1.0"},
+    "sources": [{"type": "synthetic", "name": "Illustrative empty snapshot"}],
+    "recordCounts": {"canonicalItems": 0}
+  }
 }
 ```
 
@@ -444,8 +581,8 @@ For example:
   "contractVersion": "1.0",
   "version": "1.0",
   "supportedSchemaVersions": ["1.0"],
-  "requiredSections": ["report", "metrics"],
-  "optionalSections": ["trends", "highlights", "groups", "items"],
+  "requiredSections": ["report"],
+  "optionalSections": ["metrics", "trends", "highlights", "groups", "items"],
   "features": {
     "multiPage": true,
     "scriptFree": true,
@@ -457,7 +594,8 @@ For example:
 
 ## Output contract
 
-The v1 product contract defines a complete report-site folder. The current Executive Health vertical slice emits the required entry point and machine-readable records:
+The v1 product contract defines a complete report-site folder. All five built-in renderers emit
+the required entry point and machine-readable records:
 
 ```text
 report-site/
@@ -608,7 +746,7 @@ Source-specific adapters are examples and integrations. They do not redefine the
 
 ## Theming and terminology
 
-Configuration may control presentation without changing facts:
+The following are design goals, not a claim that all configuration is rendered:
 
 - Organization or product name
 - Approved colors and design tokens
@@ -621,9 +759,16 @@ Configuration may control presentation without changing facts:
 
 Configuration must be versionable and deterministic. It must not contain credentials or source queries.
 
+Use the checked-in sample configurations for current options. Custom logo rendering, complete
+terminology substitution, `linkTo` navigation, distinct layout variants, and custom multi-page
+or repeated-group rendering remain roadmap work. Metadata acceptance does not prove a rendered
+feature. The five built-in renderers' existing pages are implemented independently of that roadmap.
+
 ## Publishing
 
-ReportKit v1 treats publishing as safe file copying.
+The v1 contract defines publishing as safe file copying. The publisher is not implemented;
+current commands return validated local files. Manual copying requires explicit authorization
+for the exact artifact and destination.
 
 Possible destinations include:
 
@@ -679,11 +824,11 @@ Do not commit local virtual environments, dependency caches, generated package m
 
 ## Current project status
 
-ReportKit is currently a Hack Week implementation project with a working Executive Health vertical slice.
+ReportKit is currently an experimental Hack Week project with five working built-in renderers.
 
 | Area | Status |
 |---|---|
-| Product contract | Frozen for v1 |
+| Product contract | v1 target; not a v1-readiness claim |
 | Five template visual designs | Complete |
 | Template capability contracts | Available for all five templates |
 | Canonical and supporting schemas | Available as v1 baselines |
@@ -691,29 +836,35 @@ ReportKit is currently a Hack Week implementation project with a working Executi
 | Shared design system | Design defined; extraction remains |
 | Executive Health deterministic generator | Implemented |
 | Declarative single-page template packs | Implemented Hack Week foundation |
-| Other four renderers | Not implemented yet |
+| Other four built-in renderers | Implemented; real Action filters and all-group Portfolio detail pages |
 | Model validator | Implemented baseline; broader schema enforcement remains |
 | Generated-site validator | Implemented baseline; publication-grade checks remain |
 | Sample 401-record dataset | Included |
-| Public Executive Health demo output | Included |
-| Automated tests | Thirty-four standard-library tests included |
+| Public generated demo output | Included for all five built-ins |
+| Automated tests | Standard-library regression suite; run it for the current count |
 | File-copy publisher | Planned for v1 |
+| Generic CSV adapter / executable mapping engine | Not implemented |
+| Executable guided init/resume / Pages deployment | Not implemented |
 
-Do not treat prototype HTML as generator output. Prototypes preserve the approved visual direction while reusable templates and deterministic rendering are implemented.
+Do not treat prototype HTML as generator output. Prototypes preserve an archived visual direction;
+the generated samples and their manifests are the implementation evidence.
 
 ## Hack Week demonstration
 
-The primary demo uses one synthetic 401-record snapshot to create three reports:
+The primary demo uses one synthetic 401-record canonical snapshot to create five reports:
 
 1. **Executive Health** — leadership asks whether intervention is required.
 2. **Action & Risk Tracker** — operators see what must happen next and who owns it.
 3. **Portfolio / Team Rollup** — managers see which teams carry the greatest risk.
+4. **Operational Health** — service owners inspect available health signals and actions.
+5. **Compliance / Readiness** — reviewers inspect available evidence, status, and remediation.
 
 The demo proves the core ReportKit idea:
 
 > Same facts. Different audience. Different decision surface.
 
-Operational Health and Compliance / Readiness demonstrate that the same contracts also support reliability, delivery, assurance, and release-review scenarios.
+The record count remains a source-record count across every view. A different audience does not
+turn synthetic records into service inventory, compliance controls, or certified readiness.
 
 ## Security and data handling
 
@@ -733,7 +884,9 @@ Never commit or publish:
 
 ReportKit should fail closed when configured prohibited fields are discovered.
 
-Public examples must use synthetic or explicitly approved data. Classification and freshness must appear in generated HTML and the manifest.
+Public examples must remain synthetic. Never include actual internal data, identifiers,
+screenshots, or machine-specific paths in public code or documentation. Classification and
+freshness must appear in generated HTML and the manifest.
 
 Report suspected vulnerabilities privately through the repository’s configured security-reporting channel. Do not disclose security vulnerabilities in a public issue.
 
@@ -791,9 +944,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.
 
 ### v0.2 — Five-template generation
 
-- Extract shared design primitives
-- Render all five templates
-- Generate Portfolio / Team child pages
+- [x] Render all five templates
+- [x] Generate real Action & Risk filtered pages
+- [x] Generate Portfolio / Team detail pages for every canonical group
+- [x] Include five generated examples from the same canonical source
+- Continue shared-design refinement
 - Support optional-section removal
 - Add template-specific semantic validation
 - Add deterministic snapshot tests
@@ -817,7 +972,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.
 
 ## MVP boundaries
 
-ReportKit v1 includes:
+The target v1 contract includes the following; this is not an implemented-feature checklist:
 
 - Five templates
 - Canonical schema and semantic validation
@@ -853,11 +1008,16 @@ No. ReportKit is primarily a skill, contract, template set, and validation workf
 
 ### Which templates can the current generator build?
 
-Executive Health is currently connected end to end. The other four templates are approved, navigable static prototypes with capability contracts, but their deterministic renderers are not implemented yet. The build helper fails explicitly if one of those template IDs is requested.
+All five: `executive-health`, `action-risk`, `portfolio-team`, `operational-health`, and
+`compliance-readiness`. Each accepts canonical JSON and its matching configuration through
+`scripts/build`. Declarative custom packs use `scripts/build-template` with a mandatory `--lock`.
 
 ### Are the prototype pages generated output?
 
-No. Files under `templates/*/prototype.html` and their companion pages preserve the approved design and interaction model. Generated output is written to the build destination and includes a manifest and validation report.
+No. Files under `templates/*/prototype.html` and their companions are archived design references.
+The Action & Risk interaction pages are canonical-populated prototypes, not built-in output.
+Generated examples live under `examples/operational-snapshot/generated/<template>/` and include
+a manifest and validation report.
 
 ### Does ReportKit install dependencies?
 
@@ -865,7 +1025,8 @@ No. The current scripts use the Python standard library. Contributors may use ad
 
 ### Can ReportKit use CSV data?
 
-Yes. A CSV adapter or agent-guided mapping must convert the source into the canonical model before rendering.
+Only after manual, agent-assisted mapping into canonical JSON. A generic CSV adapter and executable
+mapping engine are not implemented; the build helper does not consume raw CSV.
 
 ### Can one dataset generate several reports?
 
@@ -877,7 +1038,9 @@ No. Core content, navigation, tables, responsive layouts, and print rendering mu
 
 ### Can generated reports be hosted on SharePoint?
 
-Yes, when the SharePoint environment can host the generated static files. The v1 publishing example uses a locally synchronized SharePoint or OneDrive folder rather than direct SharePoint API integration.
+When that environment permits static HTML, validated files can be copied manually with explicit
+authorization. SharePoint may restrict HTML viewing; hosting compatibility must be checked.
+The synchronized-folder publisher is a planned contract, not an implemented command or deployment.
 
 ### Does ReportKit fetch source data while rendering?
 

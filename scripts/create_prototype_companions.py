@@ -47,10 +47,9 @@ def companion(title: str, back: str, template_name: str) -> str:
     <article class="card">
       <p class="label">Static prototype companion</p>
       <h1>{escape(title)}</h1>
-      <p>This page completes the approved prototype's static navigation contract. The deterministic
-      generator will populate this page from canonical groups, items, metrics, and state definitions
-      when this template is connected to the engine.</p>
-      <p class="notice">No source-specific data or live behavior is embedded in this design artifact.</p>
+      <p>This archived page illustrates the approved prototype's static navigation contract.
+      It is a hand-authored design companion, not a generated report or canonical group detail.</p>
+      <p class="notice">Illustrative design only. No source-system connection or live behavior.</p>
     </article>
   </main>
 </body>
@@ -78,7 +77,7 @@ def main() -> int:
         links = sorted(set(re.findall(r'href="([^"]+\.html)"', prototype)))
         for link in links:
             destination = root / directory / link
-            if destination.exists():
+            if destination.exists() and "Static prototype companion" not in destination.read_text(encoding="utf-8"):
                 continue
             title = PAGE_TITLES.get(link, Path(link).stem.replace("-", " ").title())
             destination.write_text(
@@ -92,4 +91,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -13,9 +13,26 @@
   "pageCount": 1,
   "reportId": "operational-portfolio-2026-09-15",
   "reportKitVersion": "0.1.0",
+  "reproducibility": {
+    "artifactHashes": {
+      ".reportkit-output.json": "sha256:c65e23af0e9840ff0b73284cb5b07ff7151612c23bf669fbdca943d6b28ff9b3",
+      "index.html": "sha256:e79e34021eb712662d029bca4dc506935ee95757e05ba127bada62c38d8ef941",
+      "validation-report.json": "sha256:874a9ad4c9cc2ead056d39acb17b3d8b7f4747f25324889141ca6e8ec44c6396"
+    },
+    "canonicalModelDigest": "sha256:a5779589fb61a8953b30b3a3f7d7454062b9ff63b19f5de1e3aaef792f086203",
+    "configurationDigest": "sha256:2bb834535a5206c534d799e0ad7b8a2676460e25df5260f08772ec0a47e31ef4",
+    "renderer": {
+      "digest": "sha256:992ef376f6e1d54f15a0510921deb7d6024dc2fdafb1837b0f20f410fae4ea6b",
+      "id": "reportkit-python"
+    },
+    "sourceIdentifiers": [
+      "adapter:synthetic-operational-snapshot@1.0",
+      "source:generated-sample:ReportKit public synthetic sample"
+    ]
+  },
   "schemaVersion": "1.0",
   "template": {
-    "digest": "sha256:84ab4c2d298c55ede9d419de0bd0e94077bbd2061822a4b94f21d022946fbf81",
+    "digest": "sha256:01e8e2969d8670d7774bf7ffcfc864123e3aecd50a9fc776c89b2e7158fe347c",
     "id": "executive-health",
     "kind": "built-in",
     "source": "repository",

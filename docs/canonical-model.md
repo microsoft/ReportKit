@@ -41,6 +41,16 @@ and either may be absent only when the template capability permits it.
 Every metric declares its unit. Raw records, canonical items, grouped decisions, programs, teams,
 services, requirements, incidents, builds, and percentages are not interchangeable.
 
+Items may separately declare `lifecycle`, `category`, `confidence`, `rootCauseState`,
+`evidenceState`, an `exception`, a `readinessGate`, and `recoveryMilestones`. Reports may declare
+`outlookMilestones`, and provenance may declare per-source `coverage`. These fields keep workflow,
+health, evidence, exception, readiness, recovery, and source-coverage facts distinct instead of
+overloading `status` or flattening them into prose.
+
+`provenance.recordCounts.canonicalItems`, when present, must equal `items.length`. `raw` remains an
+independent source count. If `sourceTotal` is supplied, it must reconcile with the individual
+`provenance.sources[].recordCount` values and with `raw`.
+
 ## References
 
 Groups may reference child groups and items. All references must resolve, and IDs must be unique

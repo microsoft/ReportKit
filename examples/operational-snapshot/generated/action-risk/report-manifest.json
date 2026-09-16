@@ -1,0 +1,55 @@
+{
+  "classification": "Public sample",
+  "dataAsOf": "2026-09-15T17:55:00Z",
+  "files": [
+    ".reportkit-output.json",
+    "all-records.html",
+    "blocked.html",
+    "due-next-seven-days.html",
+    "index.html",
+    "overdue.html",
+    "report-manifest.json",
+    "validation-report.json"
+  ],
+  "generatedAt": "2026-09-15T18:00:00Z",
+  "itemCount": 401,
+  "manifestVersion": "1.0",
+  "pageCount": 5,
+  "reportId": "operational-portfolio-2026-09-15",
+  "reportKitVersion": "0.1.0",
+  "reproducibility": {
+    "artifactHashes": {
+      ".reportkit-output.json": "sha256:c65e23af0e9840ff0b73284cb5b07ff7151612c23bf669fbdca943d6b28ff9b3",
+      "all-records.html": "sha256:ab62bdcd2041fb6ae49b0a0c62acc524e0c23fc49653f109b063d51a70abd22e",
+      "blocked.html": "sha256:72e2e1002bb803b2eb0ca1f9b523dbe6eabfd8b106737f93faa7f92226302dca",
+      "due-next-seven-days.html": "sha256:75ad888da3addf3560c3dfc6c2d491bbeecbdd7d88439990a2362b64042fd405",
+      "index.html": "sha256:8b364d19d28e3e78051fc0ecdee3c7cd4c3c6bc5ae6788856a5163f57aefe58d",
+      "overdue.html": "sha256:3d287ba665df491fc0eadc033470e0e289015696fb54d37e49122f1a014b49c1",
+      "validation-report.json": "sha256:874a9ad4c9cc2ead056d39acb17b3d8b7f4747f25324889141ca6e8ec44c6396"
+    },
+    "canonicalModelDigest": "sha256:a5779589fb61a8953b30b3a3f7d7454062b9ff63b19f5de1e3aaef792f086203",
+    "configurationDigest": "sha256:7bb57c02917077507c12714dd9a9610fc97bfdbe4b2a58d7275a1b730bf61771",
+    "renderer": {
+      "digest": "sha256:992ef376f6e1d54f15a0510921deb7d6024dc2fdafb1837b0f20f410fae4ea6b",
+      "id": "reportkit-python"
+    },
+    "sourceIdentifiers": [
+      "adapter:synthetic-operational-snapshot@1.0",
+      "source:generated-sample:ReportKit public synthetic sample"
+    ]
+  },
+  "schemaVersion": "1.0",
+  "template": {
+    "digest": "sha256:7000662bbec11f9eeb4053676f1a8863e8e55f3eb4f6736967c42eb7970f9713",
+    "id": "action-risk",
+    "kind": "built-in",
+    "source": "repository",
+    "version": "1.0"
+  },
+  "validation": {
+    "errors": 0,
+    "info": 0,
+    "status": "passed",
+    "warnings": 0
+  }
+}

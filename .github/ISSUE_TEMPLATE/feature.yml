@@ -1,0 +1,25 @@
+name: Feature request
+description: Propose a reusable reporting capability.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: decision
+    attributes:
+      label: Reporting decision
+      description: What decision should the generated report help its audience make?
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Proposed contract change
+      description: Describe the generic canonical data or template capability required.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Explain why existing templates or fields are insufficient.

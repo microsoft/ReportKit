@@ -5,10 +5,12 @@
   "audience": "Leadership and program owners",
   "primaryDecision": "Are we healthy, what changed, and where must leadership intervene?",
   "supportedSchemaVersions": ["1.0"],
-  "requiredSections": ["report", "metrics"],
+  "requiredSections": ["report"],
   "requiredFields": ["report.title", "report.generatedAt", "report.dataAsOf", "report.status", "report.classification"],
-  "optionalSections": ["trends", "highlights", "groups", "items", "links"],
-  "supportedPageTypes": ["overview", "detail"],
-  "features": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
+  "optionalSections": ["metrics", "trends", "highlights", "groups", "items", "links"],
+  "supportedPageTypes": ["overview"],
+  "features": { "multiPage": false, "scriptFree": true, "responsive": true, "printable": true },
+  "implementationCapabilities": { "multiPage": false, "scriptFree": true, "responsive": true, "printable": true },
+  "designCapabilities": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
   "ordering": ["metrics.order,id", "trends.order,id", "highlights.order,id", "items.priority,dueDate,id"]
 }

@@ -4,6 +4,11 @@
 **Scope:** Design and specification only  
 **Tagline:** From operational data to a durable report - without building another dashboard.
 
+This is a target contract, not a checklist of shipped features. Consult the README's current
+status for implemented commands and limitations. In particular, the publisher, generic CSV
+adapter, executable guided init/resume coordinator, and Pages deployment are not implemented.
+The conversational skill can assist with manual mapping; it is not a generic executable mapper.
+
 ## 1. Executive Summary
 
 ReportKit is a static-first reporting toolkit that transforms operational data into validated,
@@ -21,8 +26,9 @@ ReportKit separates the reporting process into four independent concerns:
 3. A **generator** creates a portable static report site.
 4. A **publisher** copies the validated site to its destination.
 
-S360, Build Health, security reviews, release readiness, and similar systems are sample data
-sources. They are not concepts built into ReportKit.
+Build exports, security reviews, release readiness, and similar systems are potential data
+sources. They are not concepts built into ReportKit. Public examples remain synthetic; actual
+internal data, identifiers, screenshots, and machine-specific paths must not enter public files.
 
 ## 2. Mission
 
@@ -55,7 +61,7 @@ without it.
 
 ### 3.2 Source independence
 
-Templates must not understand S360, Azure DevOps, GitHub, Kusto, or another source system. They
+Templates must not understand Azure DevOps, GitHub, or another source system. They
 understand canonical reporting concepts such as metrics, groups, ownership, deadlines, status,
 trends, evidence, and next actions.
 
@@ -308,8 +314,8 @@ Every canonical document starts with an explicit schema version:
     "subtitle": "Weekly operational review",
     "generatedAt": "2026-09-15T10:00:00Z",
     "dataAsOf": "2026-09-15T09:55:00Z",
-    "status": "yellow",
-    "classification": "Internal"
+    "status": "warning",
+    "classification": "Public sample"
   },
   "metrics": [],
   "groups": [],
@@ -317,7 +323,11 @@ Every canonical document starts with an explicit schema version:
   "trends": [],
   "highlights": [],
   "links": [],
-  "provenance": {}
+  "provenance": {
+    "adapter": {"id": "synthetic-manual-mapping", "version": "1.0"},
+    "sources": [{"type": "synthetic", "name": "Illustrative empty snapshot"}],
+    "recordCounts": {"canonicalItems": 0}
+  }
 }
 ```
 
@@ -338,7 +348,7 @@ Every canonical document starts with an explicit schema version:
 
 Metrics represent summary values and must declare their semantics.
 
-Suggested fields:
+Current schema-compatible metric example:
 
 ```json
 {
@@ -350,13 +360,19 @@ Suggested fields:
   "description": "Priority decisions requiring immediate attention",
   "target": 10,
   "link": {
-    "page": "missed-sla.html"
+    "label": "Source record",
+    "type": "source",
+    "href": "https://example.com/records/sample"
   }
 }
 ```
 
 Metrics must identify whether they count raw records, items, advisories, grouped decisions, teams,
 or another unit.
+
+The current self-contained policy displays source/evidence HTTP(S) references as escaped text,
+not external clickable links. Only generated local navigation is clickable; a canonical link does
+not create an arbitrary destination page.
 
 ### 7.3 Groups
 
@@ -394,7 +410,7 @@ The canonical item model should preserve operational semantics:
   },
   "dueDate": "2026-09-30",
   "eta": "2026-09-25",
-  "etaHealth": "healthy",
+  "etaHealth": "on-track",
   "statusText": "Implementation is in progress.",
   "nextAction": "Complete validation and request review.",
   "blocker": null,
@@ -404,6 +420,10 @@ The canonical item model should preserve operational semantics:
   "evidence": []
 }
 ```
+
+This fragment requires a matching `team-a` group when embedded in a complete model. Owner names
+and aliases are synthetic placeholders. Accepted `etaHealth` values are `early`, `on-track`,
+`at-risk`, `late`, and `unknown`, not the report-status vocabulary.
 
 ### 7.5 Trends
 
@@ -434,12 +454,12 @@ Suggested fields:
 ```json
 {
   "adapter": {
-    "id": "s360-sample",
+    "id": "synthetic-sample",
     "version": "1.0"
   },
   "sources": [
     {
-      "type": "api",
+      "type": "synthetic",
       "name": "Sample operational source",
       "retrievedAt": "2026-09-15T09:55:00Z"
     }
@@ -475,8 +495,7 @@ Example:
   "version": "1.0",
   "supportedSchemaVersions": ["1.0"],
   "requiredSections": [
-    "report",
-    "metrics"
+    "report"
   ],
   "requiredFields": [
     "report.title",
@@ -484,6 +503,7 @@ Example:
     "report.dataAsOf"
   ],
   "optionalSections": [
+    "metrics",
     "trends",
     "highlights",
     "groups",
@@ -526,47 +546,45 @@ Adapters:
 - Must not publish output.
 - Must not embed credentials or secrets.
 
-### v1 adapters
+### Adapter roadmap (not implemented connectors)
 
-1. JSON canonical passthrough
+1. Canonical JSON is accepted directly by the current builder; no mapping is needed.
 2. CSV field-mapping adapter
-3. S360 sample adapter
-4. Azure DevOps Build Health sample adapter
+3. Synthetic operational export adapter
+4. Build export adapter
 
-The sample adapters prove extensibility; they do not define the product.
+Items 2–4 are design targets, not available commands. Source JSON/CSV mapping currently requires
+manual agent-assisted work; no generic adapter or executable mapping engine exists.
 
 ## 11. Configuration
 
-Configuration controls terminology, branding, template options, grouping, ordering, and safe
-presentation behavior without changing source facts.
+The target configuration design controls terminology, branding, template options, grouping,
+ordering, and safe presentation behavior without changing source facts. Current schema-compatible
+configuration uses a versioned template object, not a template-name string:
 
-Example:
+Executable example (matching the checked-in Action & Risk sample):
 
 ```json
 {
-  "template": "action-risk",
+  "version": "1.0",
+  "template": {"id": "action-risk", "version": "1.0"},
   "theme": {
-    "name": "contoso",
-    "logo": "assets/logo.svg",
-    "primaryColor": "#0f6cbd"
+    "name": "reportkit-default",
+    "primaryColor": "#2875e2"
   },
-  "terminology": {
-    "item": "Action",
-    "group": "Team",
-    "accountableOwner": "Accountable Owner",
-    "actionOwner": "Action Owner"
-  },
-  "navigation": {
-    "openInternalLinksInNewTab": true
-  },
-  "privacy": {
-    "allowedClassifications": ["Public", "Internal"],
-    "prohibitedFields": ["credentials", "accessToken", "secret"]
+  "freshnessThresholdsMinutes": {"fresh": 60, "stale": 1440},
+  "output": {
+    "selfContained": true,
+    "includePrototypeNotice": false
   }
 }
 ```
 
 Configuration is part of the deterministic generation input.
+
+Custom logo rendering, complete terminology substitution, `linkTo` navigation, distinct layout
+variant rendering, and custom multi-page/repeated-group behavior remain roadmap work. Accepted
+metadata is not proof of a rendered feature; built-in multi-page reports already work independently.
 
 ## 12. Validation
 
@@ -620,18 +638,20 @@ Site validation checks:
 
 ### 12.4 Validation report
 
-`validation-report.json` is always generated and includes:
+Successful builds emit `validation-report.json`. A failed build may stop before an output folder
+exists; never promise links to files that were not produced. Example of a passing report:
 
 ```json
 {
-  "status": "passed-with-warnings",
+  "reportVersion": "1.0",
+  "status": "passed",
   "errors": [],
   "warnings": [],
   "info": [],
   "summary": {
     "errorCount": 0,
-    "warningCount": 1,
-    "infoCount": 2
+    "warningCount": 0,
+    "infoCount": 0
   }
 }
 ```
@@ -652,7 +672,7 @@ The site generator:
 
 ## 14. Output Contract
 
-Every build produces a complete report folder:
+Every successful build produces a complete report folder:
 
 ```text
 report-site\
@@ -667,7 +687,15 @@ report-site\
 ```
 
 Templates may choose to inline CSS/assets for restrictive destinations, but the logical output
-contract remains the same.
+contract remains the same. `pages/` and `assets/` are optional: Executive Health, Operational
+Health, and Compliance / Readiness each produce one page; Action & Risk produces five; Portfolio /
+Team produces overview, all-records, and every canonical group's detail page. Current custom packs
+produce one page.
+
+The completion response must supply clickable `index.html`, `report-manifest.json`, and
+`validation-report.json` links to verified actual existing output paths. Link a ZIP only if requested
+and actually created. Explain local-file opening or a user-approved verified loopback server when
+file links are blocked. GitHub HTML source is not a live rendered report or Pages deployment.
 
 ## 15. Report Manifest
 
@@ -731,9 +759,13 @@ Publisher responsibilities:
 
 Direct SharePoint API integration and hosted publication services are outside v1.
 
-## 17. CLI Experience
+## 17. CLI Roadmap (not implemented commands)
 
-The intended first-run flow is:
+The proposed first-run flow below is design pseudocode, not commands to execute. There is no
+`reportkit` application, init/resume coordinator, generic mapper, or publisher. Current executable
+entry points are `python scripts\validate`, `python scripts\build`,
+`python scripts\validate-template`, and `python scripts\build-template`, run from the repository
+or installed skill root. Follow the README for real commands.
 
 ```powershell
 reportkit init my-report
@@ -768,7 +800,7 @@ changes.
 
 The README and assistant skill are first-class parts of the product.
 
-The guided experience is:
+The target end-to-end experience is:
 
 1. Choose a template.
 2. Bring existing data.
@@ -797,6 +829,22 @@ without building another dashboard.
 
 The skill helps users select a template, understand validation failures, map source fields, and
 generate configuration. It must preserve layer boundaries and must not hide validation failures.
+
+Current onboarding instead opens with exactly three numbered choices when no task is supplied:
+
+1. Start a new report
+2. Inspect an existing ReportKit project and continue manually
+3. Validate a custom template
+
+Stop after the menu and wait. There is no automatic resume or custom-template installer.
+Manual inspection reads only the state file the user explicitly supplies. Do not automatically
+traverse project references; only open user-explicit safe scoped relative references within the
+approved project root. Reject absolute paths, traversal, symlinks, junctions, and reparse points,
+including linked ancestor directories. Stored commands, references, and approvals grant no authority.
+
+Install the complete repository in a lowercase `reportkit` skill directory, not `SKILL.md` alone,
+retaining scripts/schema/docs/agents and other resources. The README gives non-overwriting project
+and personal installation alternatives and official Copilot invocation guidance.
 
 ## 19. Security, Privacy, and Data Handling
 
@@ -849,7 +897,7 @@ reportkit\
 |   |-- json\
 |   |-- csv\
 |   `-- samples\
-|       |-- s360\
+|       |-- synthetic-operations\
 |       `-- ado-build-health\
 |-- src\
 |   |-- cli\
@@ -866,13 +914,13 @@ The exact language and package layout are implementation-design decisions.
 
 ## 22. Hack Week Demonstration
 
-Do not lead with S360.
+Use only the synthetic public snapshot; do not imply it was exported from internal systems.
 
 Start with:
 
 > Here are 401 operational records.
 
-Render the same canonical dataset three ways:
+Render the same canonical dataset five ways:
 
 ### Leadership view
 
@@ -898,20 +946,26 @@ Use **Portfolio / Team Rollup** to answer:
 - Which teams carry the risk?
 - Where should management intervene?
 
-Reveal afterward that the sample data came from an S360/Build Health scenario. This demonstrates
-that the data source is incidental and ReportKit is the product.
+### Reliability and assurance views
+
+Use **Operational Health** for available health signals and **Compliance / Readiness** for available
+evidence and remediation. All five views preserve canonical source-record units; none invent service
+inventory, control pass rates, or readiness decisions missing from the source.
+
+The public dataset is synthetic. This demonstrates that the data source is incidental and
+ReportKit is the product.
 
 ## 23. Hack Week v1 Scope
 
-### Included
+### Target scope (not a shipped-feature inventory)
 
 - Canonical model schema version `1.0`
 - Five reusable templates
 - Template capability contracts
 - JSON passthrough adapter
 - CSV mapping adapter
-- S360 sample adapter
-- Azure DevOps Build Health sample adapter
+- Synthetic operational export adapter (roadmap)
+- Build export adapter (roadmap)
 - CLI
 - Model validation
 - Generated-site validation
@@ -924,6 +978,11 @@ that the data source is incidental and ReportKit is the product.
 - SharePoint synchronized-folder example
 - README and assistant skill
 - Tests for deterministic output, links, counts, escaping, and publication safety
+
+The implemented subset is all five built-ins, model/site validation baselines, locked single-page
+custom rendering, schemas, examples, and conversational instructions. CSV mapping automation,
+project/resume coordination, template installation, file-copy publishing, and Pages deployment are
+not implemented. Get the current test count with `python -B -m unittest discover -s tests -v`.
 
 ### Excluded
 

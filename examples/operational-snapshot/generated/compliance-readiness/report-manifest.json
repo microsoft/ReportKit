@@ -1,0 +1,47 @@
+{
+  "classification": "Public sample",
+  "dataAsOf": "2026-09-15T17:55:00Z",
+  "files": [
+    ".reportkit-output.json",
+    "index.html",
+    "report-manifest.json",
+    "validation-report.json"
+  ],
+  "generatedAt": "2026-09-15T18:00:00Z",
+  "itemCount": 401,
+  "manifestVersion": "1.0",
+  "pageCount": 1,
+  "reportId": "operational-portfolio-2026-09-15",
+  "reportKitVersion": "0.1.0",
+  "reproducibility": {
+    "artifactHashes": {
+      ".reportkit-output.json": "sha256:c65e23af0e9840ff0b73284cb5b07ff7151612c23bf669fbdca943d6b28ff9b3",
+      "index.html": "sha256:d714bcd443cdd5ca710fd8db52110079c7dbf14cc0705417d6b54bc9a5d3321b",
+      "validation-report.json": "sha256:874a9ad4c9cc2ead056d39acb17b3d8b7f4747f25324889141ca6e8ec44c6396"
+    },
+    "canonicalModelDigest": "sha256:a5779589fb61a8953b30b3a3f7d7454062b9ff63b19f5de1e3aaef792f086203",
+    "configurationDigest": "sha256:c0ed58d7f5fdcd67216c5c0a520d1eb6d28eebba677aa44957d48d569aba6f1e",
+    "renderer": {
+      "digest": "sha256:992ef376f6e1d54f15a0510921deb7d6024dc2fdafb1837b0f20f410fae4ea6b",
+      "id": "reportkit-python"
+    },
+    "sourceIdentifiers": [
+      "adapter:synthetic-operational-snapshot@1.0",
+      "source:generated-sample:ReportKit public synthetic sample"
+    ]
+  },
+  "schemaVersion": "1.0",
+  "template": {
+    "digest": "sha256:c27461ccf8db4e4de287c96212bad8c94403647d1f7bb75e8e6fb4068e875a0b",
+    "id": "compliance-readiness",
+    "kind": "built-in",
+    "source": "repository",
+    "version": "1.0"
+  },
+  "validation": {
+    "errors": 0,
+    "info": 0,
+    "status": "passed",
+    "warnings": 0
+  }
+}

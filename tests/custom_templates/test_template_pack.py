@@ -150,7 +150,7 @@ class DeclarativeTemplatePackTests(unittest.TestCase):
             "## Phase 1 — Choose a template",
             "## Phase 2 — Add your data",
             "## Phase 3 — Build and review",
-            "## Phase 4 — Publish to a destination",
+            "## Phase 4 — Return files or export manually",
         ]
         positions = [skill.index(phase) for phase in phases]
         self.assertEqual(sorted(positions), positions)
@@ -163,14 +163,14 @@ class DeclarativeTemplatePackTests(unittest.TestCase):
         guided = skill.index("## Guided path")
         onboarding = skill[start:guided]
         expected_choices = [
-            "Start a new report — choose a template, then add JSON, CSV, or the sample",
-            "Resume a report — continue from an explicitly supplied `reportkit.project.json`",
-            "Add a custom template — validate a local template folder or ZIP",
+            "Start a new report",
+            "Inspect an existing ReportKit project and continue manually",
+            "Validate a custom template",
         ]
         self.assertTrue(all(choice in onboarding for choice in expected_choices))
         self.assertIn("Stop after the menu and wait.", onboarding)
         self.assertIn(
-            "`1 Choose template → 2 Add data → 3 Build and review → 4 Export or publish`",
+            "`1 Choose template → 2 Add data → 3 Build and review → 4 Return files or export manually`",
             skill,
         )
         self.assertIn("--lock <reportkit.lock.json>", skill)
@@ -178,7 +178,12 @@ class DeclarativeTemplatePackTests(unittest.TestCase):
         metadata = (ROOT / "agents" / "openai.yaml").read_text(encoding="utf-8")
         self.assertIn('display_name: "ReportKit"', metadata)
         self.assertIn('short_description: "Build validated static reports from operational data"', metadata)
-        self.assertIn('default_prompt: "Use $reportkit to get started with a validated static HTML report."', metadata)
+        self.assertIn(
+            'default_prompt: "Use $reportkit. Show exactly three choices: Start a new report; '
+            'Inspect an existing ReportKit project and continue manually; Validate a custom template. '
+            'Stop and wait for my selection."',
+            metadata,
+        )
 
     def test_declared_cases_execute_and_selection_changes_output(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

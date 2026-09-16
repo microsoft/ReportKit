@@ -5,10 +5,12 @@
   "audience": "Operators, engineers, and remediation owners",
   "primaryDecision": "What must be done, by whom, by when, and what is blocking progress?",
   "supportedSchemaVersions": ["1.0"],
-  "requiredSections": ["report", "metrics", "items"],
-  "requiredFields": ["report.title", "report.generatedAt", "report.dataAsOf", "report.classification", "items[].id", "items[].title"],
-  "optionalSections": ["groups", "trends", "highlights", "links"],
-  "supportedPageTypes": ["overview", "queue", "detail"],
+  "requiredSections": ["report"],
+  "requiredFields": ["report.title", "report.generatedAt", "report.dataAsOf", "report.classification"],
+  "optionalSections": ["metrics", "items", "groups", "trends", "highlights", "links"],
+  "supportedPageTypes": ["overview", "queue"],
   "features": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
+  "implementationCapabilities": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
+  "designCapabilities": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
   "ordering": ["items.priority", "items.blocker", "items.dueDate", "items.id"]
 }

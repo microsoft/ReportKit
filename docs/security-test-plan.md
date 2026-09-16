@@ -41,13 +41,14 @@ ReportKit is skill-first. The security boundary includes the Python helpers and 
 
 ## Current P0 security baseline
 
-The current vertical slice implements:
+The current engine baseline implements:
 
 - Structural and semantic canonical validation with duplicate/reference checks.
+- Canonical group-cycle rejection before rendering.
 - Rejection of prohibited sensitive field names and selected sensitive value patterns.
 - Additional public-sample identifier checks.
 - Strict configuration properties, template identity, hexadecimal color, boolean output, and bounded/ordered freshness thresholds.
-- Context-safe HTML text and attribute escaping for the Executive Health renderer.
+- Context-safe HTML text and attribute escaping in the built-in renderers.
 - Validated CSS color tokens instead of arbitrary CSS interpolation.
 - A restrictive generated-page Content Security Policy.
 - Whole-site HTML crawling.
@@ -66,7 +67,7 @@ The following remain P0 blockers before any claim of publication-safe or publica
 
 - Full evaluation of the checked-in JSON Schemas against positive and negative fixture corpora.
 - Complete nested-property enforcement across every canonical type.
-- Comprehensive context tests for every future renderer field and URL-bearing canonical property.
+- Comprehensive context tests for every renderer field and URL-bearing canonical property.
 - Sensitive-data scanning with a dedicated secret scanner plus human public-data review.
 - Renderer-exception, disk-full, interrupted-write, stale-temporary, and stale-backup simulations.
 - Browser-confirmed zero-request navigation of the generated site.
@@ -141,7 +142,8 @@ Scan the repository and release archive for secrets, internal identifiers, local
 - Property and fuzz testing.
 - Cross-platform filesystem security, including case collisions and Windows reserved names.
 
-All five templates must use the same validated engine before technical preview.
+All five built-ins use the shared validation/build pipeline. This alone does not complete the
+remaining technical-preview security gates.
 
 ## P2 v1 hardening
 

@@ -5,7 +5,8 @@
 ## Objective
 
 Create a credible open-source launch package proving that one canonical operational snapshot can
-support five audience-specific, publish-ready static reports.
+support five audience-specific static reports. This plan defines evidence to capture, not a claim
+of production readiness or deployed hosting.
 
 The launch sells outcomes:
 
@@ -23,7 +24,13 @@ The launch sells outcomes:
 **Supporting line:** ReportKit uses one canonical model and five reusable templates to create
 validated HTML reports for leaders, operators, managers, service owners, and reviewers.
 
-**Proof:** One model. Five report designs. One generated today.
+**Required proof:** One canonical source. Five generated reports.
+
+Capture only after all five built-in samples have been built and validated from
+`examples/operational-snapshot/canonical-report.json` with their `<template>.config.json` files.
+Use `examples/operational-snapshot/generated/<template>/index.html`, not archived prototype HTML.
+The 401-record count measures source records; it is not a service, control, or compliance count.
+Do not invent service-health, control-pass, exception, or release-approval facts absent from the model.
 
 ## Required screenshots
 
@@ -39,7 +46,7 @@ All screenshots use Chromium, light mode, 100% zoom, device scale factor 1, clas
 | `compliance-readiness-hero.png` | Compliance / Readiness | Can the review or release proceed? |
 
 Desktop heroes use 1440 x 1000. Mobile proofs use 390 x 844. Full-page captures use a 1440-pixel
-viewport. Final images contain no browser chrome, preview label, internal service identifiers,
+viewport. Final generated-example images contain no browser chrome, prototype label, internal service identifiers,
 confidential data, hover-only facts, clipped content, or animation-dependent state.
 
 ## Interaction contracts
@@ -48,20 +55,44 @@ confidential data, hover-only facts, clipped content, or animation-dependent sta
 
 Queue tiles are navigation:
 
-- All open
+- All attention (attention statuses or an explicit nonblank blocker)
 - Overdue
 - Blocked
 - Due in seven days
 
 Each static filtered state has a stable URL, selected-state announcement, record count matching
-the displayed rows, freshness/period/classification, keyboard focus, and a route to All open.
-Relative dates use the explicit report date, never the viewer's clock.
+the displayed rows, freshness/period/classification, keyboard focus, and a route to All attention.
+Relative dates use the UTC date of explicit `generatedAt`, never the viewer's clock. Overdue means
+strictly earlier; due in seven days includes today through today + 7. Healthy, passed, complete,
+and not-applicable records are excluded from date queues unless they have an explicit blocker.
+Canonical health status is not an open/closed lifecycle. Overdue, blocked, and due-soon views can
+overlap and must not be summed as mutually exclusive buckets.
+Attention statuses are warning, critical, blocked, failed, in-progress, pending-review, and
+not-started. The public sample uses warning/critical; archived Action interaction prototypes
+select only those two statuses and are not the authoritative built-in behavior.
+
+Capture these files under `examples/operational-snapshot/generated/action-risk/`:
+
+| View | Generated file |
+|---|---|
+| All attention | `index.html` |
+| Overdue | `overdue.html` |
+| Blocked | `blocked.html` |
+| Due in seven days | `due-next-seven-days.html` |
+| All canonical records | `all-records.html` |
 
 ### Portfolio / Team
 
 Each team card is a real keyboard-focusable link with a descriptive accessible name. Team detail
 pages preserve report metadata, distinguish accountable ownership from action ownership, reconcile
 their totals, use stable team IDs, and provide navigation back to the overview.
+
+The generated overview is `portfolio-team/index.html`, with `all-records.html` for the complete
+record set and `group-<full SHA-256 of group ID>.html` for every canonical group. Discover child
+paths from the generated overview or manifest; never substitute canonical `groups[].page` hints.
+Membership unions `groups[].itemIds`, `items[].groupIds`, and descendants, deduplicated per group.
+Validate each group's record set; do not sum overlapping groups as disjoint portfolio totals.
+Operational Health and Compliance / Readiness currently each emit one complete `index.html`.
 
 ## Visual capture workflow
 
@@ -76,6 +107,21 @@ The optional development-only Playwright workflow:
 - Never uploads or publishes
 
 Playwright is not a generated-report dependency and is not part of the ReportKit skill runtime.
+
+After explicitly approving replacement of the checked-in ReportKit-owned public sample outputs,
+generate and validate all five examples, then regenerate local showcase HTML and archived
+prototype labels:
+
+```powershell
+python -B scripts\build-examples --overwrite
+python -B scripts\create_prototype_companions.py
+python -B scripts\prepare_marketing_pages.py
+```
+
+The marketing generator refuses missing or unvalidated public examples. It does not build reports
+or capture screenshots. Recapture screenshots separately using the current capture contract after
+sample generation. Existing image filenames stay stable; a stale prototype image is not proof of
+generated behavior.
 
 ## Acceptance gates
 
@@ -110,15 +156,20 @@ may score below 4.
 
 - Describe ReportKit as an experimental open-source Hack Week project until support is established.
 - Do not imply a hosted Microsoft service.
-- Do not imply all five renderers are implemented.
-- Distinguish approved prototypes from generated output.
+- Claim five implemented renderers only with five validated built-in generated examples.
+- Keep archived prototypes distinct: Action & Risk interaction pages are canonical-populated;
+  the other archived design values are illustrative, not canonical-generated.
+- GitHub HTML links expose source; the local showcase is a browser preview. Pages is not deployed.
+- Publisher, generic CSV adapter, and executable guided init/resume remain unimplemented.
+- Manual agent-assisted mapping is not an executable generic mapper.
 - Treat S360 and Azure DevOps only as potential adapters or examples.
 - Do not claim publication-grade validation before all quality gates exist.
 
 ## Release gates
 
-**Marketing preview:** five prototype heroes, working links, public synthetic data, mobile review,
-README gallery, and accurate implementation status.
+**Experimental marketing evidence:** five generated-example heroes, working links, public synthetic
+data, mobile review, README gallery, and accurate implementation status. Historical prototype
+captures remain design evidence only.
 
 **Technical preview:** five generated templates, script-free interaction states, visual regression
 workflow, manifests, validation reports, sensitive-field checks, and matching documentation.
@@ -135,4 +186,4 @@ A new reader can inspect the README for thirty seconds and explain:
 - Why five templates exist
 - How one fact set supports different audiences
 - Which parts work today
-- How to run the Executive Health example
+- How to run the Executive Health quick start and select any of the other four built-ins

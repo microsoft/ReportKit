@@ -175,7 +175,7 @@ class P0SecurityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             site = Path(temp) / "site"
             self.assertEqual(0, self.build(site).returncode)
-            (site / "undeclared.txt").write_text("unexpected", encoding="utf-8")
+            (site / "undeclared.png").write_bytes(b"unexpected")
             manifest_path = site / "report-manifest.json"
             manifest = load_json(manifest_path)
             manifest["files"].extend(["%2e%2e/outside.txt", "C:\\outside.txt", "CON"])

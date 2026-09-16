@@ -1,8 +1,12 @@
 # Publishing
 
-ReportKit v1 publishers copy a complete validated report folder to a destination.
+This is the target v1 publishing contract, not an implemented command. No publisher or Pages
+deployment is implemented. Today, return validated local files or give manual copy instructions;
+do not copy to a destination without explicit approval for the exact artifact and destination.
 
-## Supported destination patterns
+A future ReportKit v1 publisher copies a complete validated report folder to a destination.
+
+## Planned destination patterns
 
 - SharePoint or OneDrive synchronized folder
 - File share
@@ -24,4 +28,3 @@ A publisher must:
 
 Authentication belongs to the destination environment. Credentials never enter canonical data,
 generated HTML, manifests, or logs.
-

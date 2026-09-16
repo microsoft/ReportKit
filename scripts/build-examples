@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+"""Generate all five built-in examples from the same public canonical snapshot."""
+
+import argparse
+from pathlib import Path
+
+from reportkit_engine import BUILTIN_TEMPLATE_IDS, build_site
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    example = root / "examples" / "operational-snapshot"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-root", type=Path, default=example / "generated")
+    parser.add_argument("--overwrite", action="store_true", help="Replace only existing ReportKit-owned outputs.")
+    args = parser.parse_args()
+    for template in BUILTIN_TEMPLATE_IDS:
+        report = build_site(
+            example / "canonical-report.json",
+            example / f"{template}.config.json",
+            root / "templates" / template / "template.json",
+            args.output_root / template,
+            overwrite=args.overwrite,
+        )
+        print(f"{template}: {report['status']}")
+        for issue in report["errors"] + report["warnings"]:
+            print(f"  {issue['code']}: {issue['message']}")
+        if report["errors"]:
+            return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

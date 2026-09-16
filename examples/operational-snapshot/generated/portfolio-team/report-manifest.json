@@ -1,0 +1,65 @@
+{
+  "classification": "Public sample",
+  "dataAsOf": "2026-09-15T17:55:00Z",
+  "files": [
+    ".reportkit-output.json",
+    "all-records.html",
+    "group-2a8f4d3bd190ffd3c9daf4b6686d660553a82b03c687afe4b787c9564cf86703.html",
+    "group-316396b934cbfaaff74c6dbb8984d7a257b614a8c4a2894283a3facee95ca7a7.html",
+    "group-460a7eaf9f43be971fc156c17429628d861c88a8549d8bd7d04b49855e862f27.html",
+    "group-4d0b3e16fed30640ca147c2756def0212beac15325e6d01a0a407f4b05246fe5.html",
+    "group-58ee00072efbff7143506d2837139233da731c2786b2a6808da3003daba7c42c.html",
+    "group-659a097d8a9e62d5a33d94ef2c3e71eb623fed9ab22507e7dc3ea6a4c51940f5.html",
+    "group-d1decc22a3ec58971c7c35e0cc95383988f21b7937f6f4d2d39d034263e9c6b5.html",
+    "group-f2815d6632b17502191290b831f8fadec1b72c7f34148b144c0281bb75480a85.html",
+    "index.html",
+    "report-manifest.json",
+    "validation-report.json"
+  ],
+  "generatedAt": "2026-09-15T18:00:00Z",
+  "itemCount": 401,
+  "manifestVersion": "1.0",
+  "pageCount": 10,
+  "reportId": "operational-portfolio-2026-09-15",
+  "reportKitVersion": "0.1.0",
+  "reproducibility": {
+    "artifactHashes": {
+      ".reportkit-output.json": "sha256:c65e23af0e9840ff0b73284cb5b07ff7151612c23bf669fbdca943d6b28ff9b3",
+      "all-records.html": "sha256:a03e9c126e368a1120bf7a4ec07d53e48cc27b3aaed07fa71f74c536cd296bb2",
+      "group-2a8f4d3bd190ffd3c9daf4b6686d660553a82b03c687afe4b787c9564cf86703.html": "sha256:94b16b0412db0ffc83d6b97a0f468d07182200279478387560a0d80e7af30ab2",
+      "group-316396b934cbfaaff74c6dbb8984d7a257b614a8c4a2894283a3facee95ca7a7.html": "sha256:911046fca8bceb5d0ff2f6ea576aea1aa8f74e7be8c57a83b0da65e19910c470",
+      "group-460a7eaf9f43be971fc156c17429628d861c88a8549d8bd7d04b49855e862f27.html": "sha256:5e925b5c3ec49ed2fbab4f22483b698b7db785603f54c93b374455c7e4c67f67",
+      "group-4d0b3e16fed30640ca147c2756def0212beac15325e6d01a0a407f4b05246fe5.html": "sha256:593f48cdcc3855f1f9832bc631320327194ec9bb0288813bea4df359564ab6f8",
+      "group-58ee00072efbff7143506d2837139233da731c2786b2a6808da3003daba7c42c.html": "sha256:62d99d3455b06b756408a735a51dd68b6a3fbaacc6dc0c2dff0792a5fc326f65",
+      "group-659a097d8a9e62d5a33d94ef2c3e71eb623fed9ab22507e7dc3ea6a4c51940f5.html": "sha256:4cf5d2d0ef92abcf7bd3c055267af5084a00de9c3bcc59e047db38fb969c9ec1",
+      "group-d1decc22a3ec58971c7c35e0cc95383988f21b7937f6f4d2d39d034263e9c6b5.html": "sha256:fe6bbaa7bbe10b7bbc36c4bf7f31f0afbb230a2fd49291cbeb7a860b6231a4f0",
+      "group-f2815d6632b17502191290b831f8fadec1b72c7f34148b144c0281bb75480a85.html": "sha256:d8e5529df318eb73f3a6fc7d2aec4842af0c5357a8df638a1ba76733d4f704a9",
+      "index.html": "sha256:a85c9e59f6e97ff136bd7408aa4dbb3eadf6cd37c2f81289ede86ac7db1ee483",
+      "validation-report.json": "sha256:874a9ad4c9cc2ead056d39acb17b3d8b7f4747f25324889141ca6e8ec44c6396"
+    },
+    "canonicalModelDigest": "sha256:a5779589fb61a8953b30b3a3f7d7454062b9ff63b19f5de1e3aaef792f086203",
+    "configurationDigest": "sha256:172e6904daf554bb54afc7d7ffee438d1ea2736594d583e1c38c780036a88241",
+    "renderer": {
+      "digest": "sha256:992ef376f6e1d54f15a0510921deb7d6024dc2fdafb1837b0f20f410fae4ea6b",
+      "id": "reportkit-python"
+    },
+    "sourceIdentifiers": [
+      "adapter:synthetic-operational-snapshot@1.0",
+      "source:generated-sample:ReportKit public synthetic sample"
+    ]
+  },
+  "schemaVersion": "1.0",
+  "template": {
+    "digest": "sha256:04856a5fec12d36fbcd3c1ff52253d55999358c4601e94afd00102608cac6c1c",
+    "id": "portfolio-team",
+    "kind": "built-in",
+    "source": "repository",
+    "version": "1.0"
+  },
+  "validation": {
+    "errors": 0,
+    "info": 0,
+    "status": "passed",
+    "warnings": 0
+  }
+}

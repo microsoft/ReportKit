@@ -5,10 +5,12 @@
   "audience": "Reviewers, compliance owners, and release managers",
   "primaryDecision": "Are requirements satisfied, what exceptions remain, and can the release proceed?",
   "supportedSchemaVersions": ["1.0"],
-  "requiredSections": ["report", "metrics", "groups", "items"],
+  "requiredSections": ["report"],
   "requiredFields": ["report.title", "report.generatedAt", "report.dataAsOf", "report.status", "report.classification"],
-  "optionalSections": ["trends", "highlights", "links"],
-  "supportedPageTypes": ["overview", "requirement-detail", "exception-detail"],
-  "features": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
+  "optionalSections": ["metrics", "groups", "items", "trends", "highlights", "links"],
+  "supportedPageTypes": ["overview"],
+  "features": { "multiPage": false, "scriptFree": true, "responsive": true, "printable": true },
+  "implementationCapabilities": { "multiPage": false, "scriptFree": true, "responsive": true, "printable": true },
+  "designCapabilities": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
   "ordering": ["groups.order,label,id", "items.priority,dueDate,id"]
 }

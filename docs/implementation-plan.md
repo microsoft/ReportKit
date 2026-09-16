@@ -1,9 +1,18 @@
 # ReportKit v1 Implementation Plan
 
 **Status:** Implementation baseline  
-**Workspace:** `C:\hackweek-2026\ReportKit`  
 **Product contract:** ReportKit is a static-first reporting toolkit that transforms operational
 data into validated, audience-specific, publish-ready report sites using reusable templates.
+
+The phases below describe the target implementation, not completed release gates. The README
+tracks current availability. File-copy publishing, a generic CSV adapter, executable guided
+init/resume, and Pages deployment remain unimplemented; local data mapping is agent-assisted
+manual work.
+
+Current renderer scope: all five built-ins, real static Action & Risk filters, Portfolio / Team
+detail pages for every canonical group, and a locked single-page declarative custom foundation.
+Generated examples use the same public canonical snapshot and per-template configurations.
+Operational and compliance views preserve canonical units and cannot invent missing domain facts.
 
 ## 1. Invariants
 
@@ -28,7 +37,7 @@ Rendering must not read the current clock, retrieve source data, or contact a pu
 
 ## 2. Runtime Decision
 
-Use Python 3.11 or later with the standard library for the initial deterministic helper scripts.
+Use Python 3.10 or later with the standard library for the deterministic helper scripts.
 ReportKit remains a skill/agent product and is not published as a Python package. The repository
 does not require installed dependencies for its v1 engine milestone.
 
@@ -44,7 +53,7 @@ Reasons:
 ```text
 ReportKit/
 |-- README.md
-|-- LICENSE
+|-- LICENSE.md
 |-- SECURITY.md
 |-- CONTRIBUTING.md
 |-- SKILL.md
@@ -56,7 +65,8 @@ ReportKit/
 ```
 
 The original HTML designs remain preserved as `prototype.html` in their corresponding template
-directories. They are design inputs, not yet generator output.
+directories. They remain archived design inputs, not generator output. Generated examples belong
+under `examples/operational-snapshot/generated/<template>/`, not `templates/`.
 
 ## 4. Implementation Phases
 
@@ -110,9 +120,10 @@ Gates:
 The skill workflow is:
 
 ```text
-Inspect source data
--> choose template
--> map fields
+Show three choices and wait (when no concrete task is supplied)
+-> choose template or inspect a project manually or validate a custom template
+-> inspect only explicitly supplied/authorized data
+-> map source JSON/CSV fields manually with agent assistance
 -> validate canonical data
 -> generate static HTML
 -> validate generated site
@@ -121,6 +132,12 @@ Inspect source data
 
 The skill must not hide errors, silently invent facts, publish incomplete output, or place
 credentials in canonical data.
+
+Install the complete repository as a lowercase `reportkit` skill folder, not `SKILL.md` alone;
+follow the README's verified Copilot CLI instructions. Manual project inspection never automatically
+traverses references: open only user-explicit safe scoped relative references, rejecting absolute,
+traversal, symlink/junction/reparse-point paths. Custom installation and init/resume coordination
+remain roadmap work.
 
 ### Phase 4: Build one deterministic generator
 
@@ -160,6 +177,8 @@ Use one non-sensitive, synthetic 401-record operational snapshot to render:
 - Executive Health
 - Action & Risk
 - Portfolio / Team Rollup
+- Operational Health
+- Compliance / Readiness
 
 The demo must show that the facts remain constant while the audience and decision surface change.
 
@@ -211,7 +230,18 @@ report-site/
 A build is successful only when this complete folder passes site validation. Publication must use
 a complete validated artifact and preserve the previous destination if copying fails.
 
-## 8. Initial Milestone
+`pages/` and `assets/` are optional and depend on the renderer. Current built-ins produce Executive
+Health (one page), Action & Risk (five pages), Portfolio / Team (overview, all records, and every
+group's detail page), Operational Health (one page), and Compliance / Readiness (one page).
+Custom packs currently render one page; repeated groups, custom multi-page navigation, logo
+rendering, complete terminology substitution, `linkTo`, and distinct layout variants remain roadmap.
+
+Completion supplies clickable `index.html`, `report-manifest.json`, and `validation-report.json`
+links to verified actual existing output paths, plus a ZIP link only when one was created.
+Local-file links or a verified user-approved loopback server provide previews; GitHub source is not
+live Pages hosting.
+
+## 8. Initial Milestone (historical plan)
 
 The repository foundation is complete when:
 
@@ -221,3 +251,7 @@ The repository foundation is complete when:
 4. `SKILL.md` defines the complete guided workflow.
 5. Documentation explains authoring, validation, and publishing boundaries.
 6. Build and validation entry points fail explicitly until their implementation phase is complete.
+
+The entry points now build all five built-ins and the single-page custom foundation. Do not
+restore placeholder failures. Derive the current regression count with
+`python -B -m unittest discover -s tests -v`; no fixed count is a release guarantee.

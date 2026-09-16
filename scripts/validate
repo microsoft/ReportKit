@@ -5,14 +5,14 @@ import argparse
 import json
 from pathlib import Path
 
-from reportkit_engine import load_json, validate_model, validate_site
+from reportkit_engine import BUILTIN_TEMPLATE_IDS, load_json, validate_model, validate_site
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate canonical ReportKit data or a generated report site.")
     parser.add_argument("target", type=Path, help="Canonical JSON file or generated site folder.")
     parser.add_argument("--kind", choices=("auto", "model", "site"), default="auto")
-    parser.add_argument("--template", default="executive-health", help="Template capability used for model validation.")
+    parser.add_argument("--template", default="executive-health", choices=BUILTIN_TEMPLATE_IDS, help="Template capability used for model validation.")
     args = parser.parse_args()
 
     target = args.target.absolute()

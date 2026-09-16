@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
 import re
 import shutil
 import stat
+import time
 import zipfile
 from collections import Counter
 from datetime import datetime, timedelta
@@ -37,11 +39,13 @@ from reportkit_engine import (
     write_json,
 )
 from json_schema import validate_instance, validate_schema_definition
+from artifact_identity import make_reproducibility, validate_capabilities
 
 MAX_FILES = 100
 MAX_TOTAL_BYTES = 5 * 1024 * 1024
 MAX_FILE_BYTES = 2 * 1024 * 1024
 MAX_IMAGE_BYTES = 1024 * 1024
+MAX_PACK_SECONDS = 10.0
 ALLOWED_SUFFIXES = {".json", ".md", ".txt", ".png", ".webp"}
 PROHIBITED_SUFFIXES = {
     ".html", ".htm", ".css", ".js", ".mjs", ".cjs", ".svg", ".zip", ".tar", ".gz",
@@ -49,6 +53,7 @@ PROHIBITED_SUFFIXES = {
 }
 REQUIRED_FILES = {
     "template.json",
+    "config.schema.json",
     "layout.json",
     "theme.json",
     "README.md",
@@ -90,10 +95,12 @@ def _safe_pack_path(name: str) -> bool:
     return not path.is_absolute() and ".." not in path.parts and not any(":" in part for part in path.parts)
 
 
-def _load_folder(folder: Path) -> tuple[dict[str, bytes], list[dict[str, str]]]:
+def _load_folder(folder: Path, deadline: float | None = None) -> tuple[dict[str, bytes], list[dict[str, str]]]:
     errors: list[dict[str, str]] = []
     files: dict[str, bytes] = {}
-    for path in sorted(folder.rglob("*")):
+    for path in folder.rglob("*"):
+        if deadline is not None:
+            _check_pack_budget(deadline)
         relative = path.relative_to(folder).as_posix()
         if path.is_symlink() or (hasattr(os.path, "isjunction") and os.path.isjunction(path)):
             errors.append(message("pack-symlink", "Template packs cannot contain symbolic links or junctions.", relative))
@@ -106,7 +113,7 @@ def _load_folder(folder: Path) -> tuple[dict[str, bytes], list[dict[str, str]]]:
     return files, errors
 
 
-def _load_zip(archive: Path) -> tuple[dict[str, bytes], list[dict[str, str]]]:
+def _load_zip(archive: Path, deadline: float | None = None) -> tuple[dict[str, bytes], list[dict[str, str]]]:
     errors: list[dict[str, str]] = []
     files: dict[str, bytes] = {}
     try:
@@ -115,6 +122,8 @@ def _load_zip(archive: Path) -> tuple[dict[str, bytes], list[dict[str, str]]]:
             if len(entries) > MAX_FILES:
                 errors.append(message("pack-file-count", f"Template pack exceeds {MAX_FILES} files."))
             for entry in entries[: MAX_FILES + 1]:
+                if deadline is not None:
+                    _check_pack_budget(deadline)
                 name = entry.filename
                 mode = entry.external_attr >> 16
                 if stat.S_ISLNK(mode):
@@ -135,11 +144,11 @@ def _load_zip(archive: Path) -> tuple[dict[str, bytes], list[dict[str, str]]]:
     return files, errors
 
 
-def load_pack(path: Path) -> tuple[dict[str, bytes], list[dict[str, str]]]:
+def load_pack(path: Path, deadline: float | None = None) -> tuple[dict[str, bytes], list[dict[str, str]]]:
     if path.is_dir():
-        return _load_folder(path)
+        return _load_folder(path, deadline)
     if path.is_file() and path.suffix.lower() == ".zip":
-        return _load_zip(path)
+        return _load_zip(path, deadline)
     return {}, [message("pack-location", "Template pack must be a local folder or ZIP archive.", str(path))]
 
 
@@ -172,13 +181,14 @@ def pack_digest(files: dict[str, bytes]) -> str:
 
 
 def _json_file(files: dict[str, bytes], name: str, errors: list[dict[str, str]]) -> dict[str, Any] | None:
+    from reportkit_engine import load_json_bytes
+
     try:
-        value = json.loads(files[name].decode("utf-8"))
-    except (KeyError, UnicodeDecodeError, json.JSONDecodeError) as exception:
+        if len(files[name]) > MAX_FILE_BYTES:
+            raise ValueError("JSON document exceeds the template-pack byte limit.")
+        value = load_json_bytes(files[name], name)
+    except (KeyError, ValueError, RecursionError) as exception:
         errors.append(message("pack-json", f"Invalid JSON: {exception}", name))
-        return None
-    if not isinstance(value, dict):
-        errors.append(message("pack-json-object", "JSON document must contain an object.", name))
         return None
     return value
 
@@ -193,10 +203,11 @@ def _validate_template(template: dict[str, Any], errors: list[dict[str, str]]) -
         "contractVersion", "id", "displayName", "version", "description", "audience",
         "primaryDecision", "supportedSchemaVersions", "requiredSections", "requiredFields",
         "optionalSections", "supportedPageTypes", "features", "compatibility",
+        "implementationCapabilities", "designCapabilities",
     }
     for key in sorted(set(template) - allowed):
         errors.append(message("pack-template-property", f"Unknown template property '{key}'.", f"template.json.{key}"))
-    required = allowed - {"description", "optionalSections"}
+    required = allowed - {"description", "optionalSections", "features", "implementationCapabilities", "designCapabilities"}
     for key in sorted(required):
         if key not in template:
             errors.append(message("pack-template-required", f"Missing template property '{key}'.", f"template.json.{key}"))
@@ -219,15 +230,14 @@ def _validate_template(template: dict[str, Any], errors: list[dict[str, str]]) -
             errors.append(message("pack-template-array", f"{key} must be an array of non-empty strings.", f"template.json.{key}"))
         elif len(value) != len(set(value)):
             errors.append(message("pack-template-duplicate", f"{key} cannot contain duplicates.", f"template.json.{key}"))
-    features = template.get("features")
+    features = template.get("implementationCapabilities", template.get("features"))
     if not isinstance(features, dict):
-        errors.append(message("pack-features", "features must be an object.", "template.json.features"))
+        errors.append(message("pack-features", "Runtime capabilities must be an object.", "template.json.implementationCapabilities"))
     else:
-        for key in ("multiPage", "scriptFree", "responsive", "printable"):
-            if not isinstance(features.get(key), bool):
-                errors.append(message("pack-feature", f"features.{key} must be a boolean.", f"template.json.features.{key}"))
         if features.get("scriptFree") is not True:
-            errors.append(message("pack-script-free", "Declarative templates must be script-free.", "template.json.features.scriptFree"))
+            errors.append(message("pack-script-free", "Declarative templates must be script-free.", "template.json.implementationCapabilities.scriptFree"))
+        if features.get("multiPage") is not False:
+            errors.append(message("pack-implementation-scope", "The declarative renderer implements single-page output only.", "template.json.implementationCapabilities.multiPage"))
     compatibility = template.get("compatibility")
     minimum = compatibility.get("minimumReportKitVersion") if isinstance(compatibility, dict) else None
     minimum_tuple = _version_tuple(minimum) if isinstance(minimum, str) else None
@@ -339,8 +349,32 @@ def _validate_theme(theme: dict[str, Any], errors: list[dict[str, str]]) -> None
                 errors.append(message("pack-terminology-value", "Terminology must be plain text from 1 to 60 characters.", f"theme.json.terminology.{key}"))
 
 
+class _PackBudgetExceeded(Exception):
+    pass
+
+
+def _check_pack_budget(deadline: float) -> None:
+    if time.monotonic() >= deadline:
+        raise _PackBudgetExceeded
+
+
 def validate_pack(path: Path) -> tuple[dict[str, Any], dict[str, Any] | None]:
-    files, initial_errors = load_pack(path)
+    """Validate within a cooperative deadline, not a hard filesystem/OS timeout."""
+    deadline = time.monotonic() + MAX_PACK_SECONDS
+    try:
+        return _validate_pack(path, deadline)
+    except _PackBudgetExceeded:
+        return validation_report([message(
+            "pack-budget",
+            "Template-pack validation exceeded its cooperative time budget.",
+            "template-pack",
+        )]), None
+
+
+def _validate_pack(path: Path, deadline: float) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    _check_pack_budget(deadline)
+    files, initial_errors = load_pack(path, deadline)
+    _check_pack_budget(deadline)
     files = _normalize_pack_root(files)
     errors = list(initial_errors)
     if len(files) > MAX_FILES:
@@ -350,6 +384,7 @@ def validate_pack(path: Path) -> tuple[dict[str, Any], dict[str, Any] | None]:
     for required in sorted(REQUIRED_FILES - set(files)):
         errors.append(message("pack-required-file", f"Missing required file '{required}'.", required))
     for name, content in files.items():
+        _check_pack_budget(deadline)
         if not _safe_pack_path(name):
             errors.append(message("pack-path", "Unsafe template-pack path.", name))
         suffix = PurePosixPath(name).suffix.lower()
@@ -367,17 +402,25 @@ def validate_pack(path: Path) -> tuple[dict[str, Any], dict[str, Any] | None]:
                 errors.append(message("pack-active-content", "Template packs cannot contain active HTML or CSS.", name))
             if re.search(r"!\[[^\]]*\]\(\s*(?:https?:)?//", text, re.IGNORECASE):
                 errors.append(message("pack-remote-asset", "Template-pack documentation cannot embed remote assets.", name))
-    template = _json_file(files, "template.json", errors)
-    layout = _json_file(files, "layout.json", errors)
-    theme = _json_file(files, "theme.json", errors)
-    config_schema = _json_file(files, "config.schema.json", errors)
-    minimum = _json_file(files, "examples/minimum.json", errors)
-    canonical = _json_file(files, "examples/canonical-report.json", errors)
-    configuration = _json_file(files, "examples/configuration.json", errors)
-    cases = _json_file(files, "tests/cases.json", errors)
+    def read_member(name: str) -> dict[str, Any] | None:
+        _check_pack_budget(deadline)
+        value = _json_file(files, name, errors)
+        _check_pack_budget(deadline)
+        return value
+
+    template = read_member("template.json")
+    layout = read_member("layout.json")
+    theme = read_member("theme.json")
+    config_schema = read_member("config.schema.json")
+    minimum = read_member("examples/minimum.json")
+    canonical = read_member("examples/canonical-report.json")
+    configuration = read_member("examples/configuration.json")
+    cases = read_member("tests/cases.json")
     custom_schema_errors: list[dict[str, str]] = []
     if config_schema is not None:
+        _check_pack_budget(deadline)
         custom_schema_errors = validate_schema_definition(config_schema)
+        _check_pack_budget(deadline)
         for issue in custom_schema_errors:
             errors.append(message(
                 f"pack-custom-{issue['code']}",
@@ -385,26 +428,39 @@ def validate_pack(path: Path) -> tuple[dict[str, Any], dict[str, Any] | None]:
                 f"config.schema.json:{issue.get('path', '')}",
             ))
     if template is not None:
-        errors.extend(validate_instance(
-            template,
-            load_json(Path(__file__).resolve().parents[1] / "schema" / "template-capability-v1.schema.json"),
-            path="template.json",
-        ))
-        _validate_template(template, errors)
+        capability_errors = validate_capabilities(template)
+        errors.extend(capability_errors)
+        _check_pack_budget(deadline)
+        if not capability_errors:
+            _validate_template(template, errors)
     if layout is not None:
-        errors.extend(validate_instance(
+        _check_pack_budget(deadline)
+        layout_errors = validate_instance(
             layout,
             load_json(Path(__file__).resolve().parents[1] / "schema" / "template-layout-v1.schema.json"),
             path="layout.json",
-        ))
-        _validate_layout(layout, errors)
+        )
+        errors.extend(layout_errors)
+        for issue in layout_errors:
+            if issue.get("path", "").endswith(".component"):
+                errors.append(message("pack-component", issue["message"], issue["path"]))
+        _check_pack_budget(deadline)
+        if not layout_errors:
+            _validate_layout(layout, errors)
     if theme is not None:
-        errors.extend(validate_instance(
+        _check_pack_budget(deadline)
+        theme_errors = validate_instance(
             theme,
             load_json(Path(__file__).resolve().parents[1] / "schema" / "template-theme-v1.schema.json"),
             path="theme.json",
-        ))
-        _validate_theme(theme, errors)
+        )
+        errors.extend(theme_errors)
+        for issue in theme_errors:
+            if ".tokens." in issue.get("path", ""):
+                errors.append(message("pack-theme-color", issue["message"], issue["path"]))
+        _check_pack_budget(deadline)
+        if not theme_errors:
+            _validate_theme(theme, errors)
     if cases is not None and not isinstance(cases.get("cases"), list):
         errors.append(message("pack-tests", "tests/cases.json must contain a cases array.", "tests/cases.json.cases"))
     for name in ("README.md", "LICENSE"):
@@ -412,28 +468,35 @@ def validate_pack(path: Path) -> tuple[dict[str, Any], dict[str, Any] | None]:
             errors.append(message("pack-document", f"{name} cannot be empty.", name))
     if template is not None:
         for name, model in (("examples/minimum.json", minimum), ("examples/canonical-report.json", canonical)):
+            _check_pack_budget(deadline)
             if model is not None:
                 report = validate_model(model, template)
+                _check_pack_budget(deadline)
                 for issue in report["errors"]:
                     errors.append(message(f"pack-example-{issue['code']}", issue["message"], f"{name}:{issue.get('path', '')}"))
         if configuration is not None:
+            _check_pack_budget(deadline)
             report = validate_config(configuration, template)
+            _check_pack_budget(deadline)
             for issue in report["errors"]:
                 errors.append(message(f"pack-config-{issue['code']}", issue["message"], f"examples/configuration.json:{issue.get('path', '')}"))
             if config_schema is not None and not custom_schema_errors:
+                _check_pack_budget(deadline)
                 for issue in validate_instance(configuration, config_schema, path="examples/configuration.json"):
                     errors.append(message(f"pack-custom-{issue['code']}", issue["message"], issue["path"]))
+                _check_pack_budget(deadline)
         if cases is not None and isinstance(cases.get("cases"), list):
             for case_index, case in enumerate(cases["cases"]):
+                _check_pack_budget(deadline)
                 case_path = f"tests/cases.json.cases[{case_index}]"
                 if not isinstance(case, dict) or not isinstance(case.get("expected"), str):
                     errors.append(message("pack-case", "Each case requires an expected result.", case_path))
                     continue
                 case_model: dict[str, Any] | None = None
                 if isinstance(case.get("input"), str):
-                    case_model = _json_file(files, case["input"], errors)
+                    case_model = read_member(case["input"])
                 elif isinstance(case.get("mutation"), str) and canonical is not None:
-                    case_model = json.loads(json.dumps(canonical))
+                    case_model = copy.deepcopy(canonical)
                     match = re.fullmatch(r"remove ([A-Za-z0-9_.]+)", case["mutation"])
                     if match:
                         parts = match.group(1).split(".")
@@ -447,7 +510,9 @@ def validate_pack(path: Path) -> tuple[dict[str, Any], dict[str, Any] | None]:
                 else:
                     errors.append(message("pack-case-input", "Case requires input or a supported mutation.", case_path))
                 if case_model is not None:
+                    _check_pack_budget(deadline)
                     result = validate_model(case_model, template)
+                    _check_pack_budget(deadline)
                     actual = "failed" if result["errors"] else "passed"
                     if actual != case["expected"]:
                         errors.append(message(
@@ -456,9 +521,12 @@ def validate_pack(path: Path) -> tuple[dict[str, Any], dict[str, Any] | None]:
                             case_path,
                         ))
 
+    _check_pack_budget(deadline)
     report = validation_report(errors)
     if report["errors"]:
         return report, None
+    digest = pack_digest(files)
+    _check_pack_budget(deadline)
     return report, {
         "files": files,
         "template": template,
@@ -466,7 +534,7 @@ def validate_pack(path: Path) -> tuple[dict[str, Any], dict[str, Any] | None]:
         "theme": theme,
         "configSchema": config_schema,
         "configuration": configuration,
-        "digest": pack_digest(files),
+        "digest": digest,
     }
 
 
@@ -664,6 +732,11 @@ def build_pack_site(
             "info": preliminary["summary"]["infoCount"],
         },
     }
+    try:
+        manifest["reproducibility"] = make_reproducibility(model, config, temporary)
+    except (OSError, ValueError) as exception:
+        shutil.rmtree(temporary)
+        return validation_report([message("artifact-identity", f"Cannot identify generated artifacts: {exception}", "report-manifest.json.reproducibility")])
     write_json(temporary / "report-manifest.json", manifest)
     site_report = validate_site(temporary, len(model.get("items", [])))
     final_report = merge_reports(input_report, site_report)
@@ -674,10 +747,19 @@ def build_pack_site(
         "info": final_report["summary"]["infoCount"],
     }
     write_json(temporary / "validation-report.json", final_report)
+    try:
+        manifest["reproducibility"] = make_reproducibility(model, config, temporary)
+    except (OSError, ValueError) as exception:
+        shutil.rmtree(temporary)
+        return validation_report([message("artifact-identity", f"Cannot identify generated artifacts: {exception}", "report-manifest.json.reproducibility")])
     write_json(temporary / "report-manifest.json", manifest)
     if final_report["errors"]:
         shutil.rmtree(temporary)
         return final_report
+    refreshed_report = validate_site(temporary, len(model.get("items", [])))
+    if refreshed_report["errors"]:
+        shutil.rmtree(temporary)
+        return merge_reports(final_report, refreshed_report)
     try:
         replacement_warnings = replace_output(temporary, output_path, backup)
     except OSError as exception:
@@ -691,5 +773,12 @@ def build_pack_site(
             "info": final_report["summary"]["infoCount"],
         }
         write_json(output_path / "validation-report.json", final_report)
+        try:
+            manifest["reproducibility"] = make_reproducibility(model, config, output_path)
+        except (OSError, ValueError) as exception:
+            return validation_report([message("artifact-identity", f"Cannot identify generated artifacts: {exception}", "report-manifest.json.reproducibility")])
         write_json(output_path / "report-manifest.json", manifest)
+        refreshed_report = validate_site(output_path, len(model.get("items", [])))
+        if refreshed_report["errors"]:
+            return merge_reports(final_report, refreshed_report)
     return final_report

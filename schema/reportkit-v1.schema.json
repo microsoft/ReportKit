@@ -68,7 +68,11 @@
         "status": { "$ref": "#/$defs/status" },
         "statusLabel": { "type": "string" },
         "statusSummary": { "type": "string" },
-        "classification": { "type": "string", "minLength": 1 }
+        "classification": { "type": "string", "minLength": 1 },
+        "outlookMilestones": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/milestone" }
+        }
       }
     },
     "delta": {
@@ -128,8 +132,24 @@
         "title": { "type": "string", "minLength": 1 },
         "summary": { "type": "string" },
         "status": { "$ref": "#/$defs/status" },
+        "lifecycle": { "enum": ["open", "closed", "completed", "cancelled", "unknown"] },
+        "category": {
+          "enum": [
+            "action", "risk", "build", "deployment", "incident", "requirement",
+            "control", "recovery", "decision", "other"
+          ]
+        },
         "priority": { "enum": ["critical", "high", "medium", "low", "unknown"] },
         "severity": { "type": "string" },
+        "confidence": { "enum": ["confirmed", "likely", "possible", "unknown"] },
+        "rootCauseState": { "enum": ["unknown", "investigating", "suspected", "confirmed", "not-applicable"] },
+        "evidenceState": { "enum": ["not-required", "missing", "partial", "submitted", "verified", "rejected", "unknown"] },
+        "exception": { "$ref": "#/$defs/exception" },
+        "readinessGate": { "$ref": "#/$defs/readinessGate" },
+        "recoveryMilestones": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/milestone" }
+        },
         "accountableOwner": { "$ref": "#/$defs/owner" },
         "actionOwner": { "$ref": "#/$defs/owner" },
         "dueDate": { "type": ["string", "null"], "format": "date" },
@@ -144,6 +164,40 @@
         "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
         "evidence": { "type": "array", "items": { "$ref": "#/$defs/link" } },
         "order": { "type": "integer" }
+      }
+    },
+    "milestone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "status"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "#/$defs/status" },
+        "targetDate": { "type": ["string", "null"], "format": "date" },
+        "completedDate": { "type": ["string", "null"], "format": "date" },
+        "summary": { "type": "string" }
+      }
+    },
+    "exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["requested", "approved", "rejected", "expired", "cancelled", "unknown"] },
+        "expiresAt": { "type": ["string", "null"], "format": "date-time" },
+        "summary": { "type": "string" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/link" } }
+      }
+    },
+    "readinessGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["not-started", "in-progress", "passed", "failed", "waived", "unknown"] },
+        "decision": { "enum": ["proceed", "hold", "conditional", "undecided"] },
+        "summary": { "type": "string" }
       }
     },
     "observation": {
@@ -230,6 +284,19 @@
           "type": "object",
           "minProperties": 1,
           "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "coverage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source", "state"],
+            "properties": {
+              "source": { "type": "string", "minLength": 1 },
+              "state": { "enum": ["complete", "partial", "unavailable", "stale", "unknown"] },
+              "summary": { "type": "string" }
+            }
+          }
         }
       }
     }

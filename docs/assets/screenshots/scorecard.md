@@ -1,21 +1,18 @@
-# Hero Screenshot Review Scorecard
+# Generated Screenshot Review
 
-Scores use the 1-5 launch rubric. No accepted hero scores below 4.
-
-| Template | Comprehension | Decision clarity | Credibility | Hierarchy | Consistency | Static usability | Public safety |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Executive Health | 5 | 5 | 5 | 5 | 5 | 4 | 5 |
-| Action & Risk | 5 | 5 | 4 | 5 | 4 | 5 | 5 |
-| Portfolio / Team | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
-| Operational Health | 5 | 5 | 5 | 5 | 5 | 4 | 5 |
-| Compliance / Readiness | 5 | 5 | 5 | 5 | 5 | 4 | 5 |
+All five template screenshot sets now capture real generated public examples. Previous
+subjective scores applied to archived prototypes and are not carried forward as acceptance
+scores for new implementations.
 
 ## Review notes
 
+- The pinned Playwright Linux container produces 19 captures: five desktop, five mobile, five
+  full-page, two interaction/detail states, and two marketing images.
 - All heroes use 1440 x 1000 PNG captures with light mode and device scale factor 1.
 - All show `Public sample`, reporting period, freshness, `dataAsOf`, and `generatedAt`.
 - Action & Risk uses real static filter links and an explicit selected state.
-- Portfolio / Team cards link to stable team-detail pages.
-- Operational Health mobile overflow was detected by capture validation and corrected before acceptance.
-- Prototype screenshots are visual marketing proof; only Executive Health is generated end to end.
-
+- Portfolio / Team cards link to a generated page for every group, including all actual members.
+- Capture checks reject horizontal overflow; site validation checks page metadata, local links,
+  source-record counts, and script-free content.
+- Examples use only synthetic public records. Missing domain-specific facts remain explicit.
+- These checks and visual review are not production certification or an accessibility audit.

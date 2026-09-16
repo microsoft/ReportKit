@@ -221,19 +221,22 @@ class P0ReleaseTests(unittest.TestCase):
     def test_marketing_claims_match_current_implementation(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         showcase = (ROOT / "showcase" / "index.html").read_text(encoding="utf-8")
-        self.assertIn("working Executive Health vertical slice", readme)
-        self.assertIn("| Other four renderers | Not implemented yet |", readme)
-        self.assertIn("publication-grade checks remain", readme)
+        self.assertIn("all five built-in", readme)
+        self.assertNotIn("| Other four renderers | Not implemented yet |", readme)
+        self.assertIn("not production certification", readme)
         self.assertIn("not a hosted service", readme)
         self.assertIn("not a package that users must deploy", readme)
-        self.assertEqual(1, showcase.count("Generated end to end"))
-        self.assertEqual(4, showcase.count("Approved prototype"))
+        self.assertEqual(5, showcase.count("Generated · Experimental"))
         self.assertIn("Experimental local showcase", showcase)
-        self.assertIn("One model. Five report designs. One generated today.", showcase)
-        self.assertNotIn("One snapshot · Five audiences", (ROOT / "showcase" / "walkthrough.html").read_text(encoding="utf-8"))
+        for template in ("executive-health", "action-risk", "portfolio-team", "operational-health", "compliance-readiness"):
+            self.assertIn(f"generated/{template}/index.html", showcase)
+            self.assertIn(f"generated/{template}/index.html", readme)
+            generated = ROOT / "examples" / "operational-snapshot" / "generated" / template
+            self.assertEqual(template, json.loads((generated / "report-manifest.json").read_text(encoding="utf-8"))["template"]["id"])
         for template in ("action-risk", "portfolio-team", "operational-health", "compliance-readiness"):
             prototype = (ROOT / "templates" / template / "prototype.html").read_text(encoding="utf-8")
-            self.assertIn("Approved hand-authored design prototype", prototype)
+            self.assertIn("Archived hand-authored design prototype", prototype)
+            self.assertIn("not generated from canonical data", prototype)
 
 
 if __name__ == "__main__":

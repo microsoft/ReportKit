@@ -1,0 +1,7 @@
+{
+  "version": "1.0",
+  "template": {"id": "compliance-readiness", "version": "1.0"},
+  "theme": {"name": "reportkit-default", "primaryColor": "#2875e2"},
+  "freshnessThresholdsMinutes": {"fresh": 60, "stale": 1440},
+  "output": {"selfContained": true, "includePrototypeNotice": false}
+}

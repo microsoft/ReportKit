@@ -137,7 +137,8 @@ class ReportKitTests(unittest.TestCase):
         portfolio = json.loads(
             (ROOT / "templates" / "portfolio-team" / "template.json").read_text(encoding="utf-8")
         )
-        self.assertIn("groups[].label", portfolio["requiredFields"])
+        self.assertEqual(["report"], portfolio["requiredSections"])
+        self.assertIn("groups", portfolio["optionalSections"])
         self.assertNotIn("groups[].name", portfolio["requiredFields"])
 
     def test_all_prototype_html_links_resolve(self) -> None:

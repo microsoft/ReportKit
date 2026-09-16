@@ -2,9 +2,8 @@
   "name": "reportkit-visual-tests",
   "private": true,
   "version": "0.0.0",
-  "description": "Development-only screenshot capture dependencies.",
+  "description": "Development-only screenshot and browser accessibility dependencies.",
   "devDependencies": {
-    "ffmpeg-static": "5.2.0",
     "playwright": "1.63.0"
   }
 }

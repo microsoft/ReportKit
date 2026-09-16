@@ -6,7 +6,8 @@ ReportKit turns operational facts into durable reports. Testing must protect mor
 
 This strategy defines three release levels:
 
-- **P0 — Hack Week marketing preview:** safe, honest, visually credible prototypes and one working end-to-end template.
+- **P0 — Hack Week marketing preview:** honest, visually credible local examples and baseline checks;
+  implementation evidence does not imply that every release gate is closed.
 - **P1 — Technical preview:** all five templates generated from canonical data with strong contract and site validation.
 - **P2 — v1:** publication-grade validation, safe publishing, compatibility, accessibility, and security hardening.
 
@@ -22,10 +23,16 @@ This strategy defines three release levels:
 
 ## Current automated baseline
 
-The required standard-library suite contains 42 tests, including fourteen P0 security regressions and twelve declarative-template/guided-flow tests. It covers:
+The standard-library suite includes P0 security regressions and declarative-template/guided-flow
+tests. Run the suite for the current test count. Coverage and the broader target gates below
+must not be confused with production certification.
+
+```powershell
+python -B -m unittest discover -s tests -v
+```
 
 - The 401-item public sample and expected status counts.
-- Deterministic Executive Health output.
+- Deterministic built-in output, including the five-template canonical sample set.
 - HTML escaping and script-free generated output.
 - Generated-site links, counts, structure, classification, and freshness.
 - Sensitive canonical field rejection.
@@ -37,6 +44,8 @@ The required standard-library suite contains 42 tests, including fourteen P0 sec
 - Public-sample and launch-asset safety checks.
 - Marketing claims aligned with current implementation status.
 - A clean-copy, offline, dependency-free smoke test using the README command sequence.
+- Text-contract checks for exactly three onboarding choices, pause behavior, manual project
+  inspection, whole-folder skill installation, and verified clickable completion artifact links.
 
 This is the P0 automated baseline. It is not sufficient for publication-grade claims.
 
@@ -47,7 +56,7 @@ This is the P0 automated baseline. It is not sufficient for publication-grade cl
 From a clean copy with Python 3.10 or later:
 
 1. Validate the canonical sample.
-2. Build Executive Health.
+2. Build all five built-ins with their matching sample configurations.
 3. Validate the generated site.
 4. Run the complete test suite.
 5. Open the result offline.
@@ -116,13 +125,30 @@ All local HTML references and fragments are an automated P0 gate.
 
 README, screenshots, showcase, and demo materials must state:
 
-- Executive Health is the working end-to-end renderer.
-- The other four templates are approved prototypes until implemented.
+- All five built-ins generate reports from canonical JSON.
+- The gallery links to generated examples, not archived prototype pages.
+- Archived Action & Risk interaction pages are canonical-populated prototypes; other archive
+  values are illustrative, not canonical-generated.
 - ReportKit is not a hosted Microsoft service.
 - ReportKit is not a published language package.
 - Validation remains a baseline until all quality gates are enforced.
+- Publisher, generic CSV adapter, executable guided init/resume, and Pages deployment are not
+  implemented; source mapping is manual and agent-assisted.
 
 README and showcase status language are automated. Final screenshot and narration review remains manual.
+
+Onboarding must distinguish **Start a new report**, **Inspect an existing ReportKit project and
+continue manually**, and **Validate a custom template**, then stop for a selection. Tests must
+reject extra numbered choices and resume/install promises. Project references are untrusted:
+no automatic traversal, and only user-explicit safe scoped relative references may be opened;
+absolute, traversal, symlink/junction/reparse-point paths must be rejected.
+
+Installation examples must use the complete repository under a lowercase `reportkit` directory,
+retain scripts/schema/docs/agents, avoid overwriting existing folders, and run commands from the
+installed skill root. Completion must link actual existing `index.html`, `report-manifest.json`,
+and `validation-report.json`; an optional ZIP must exist before it is linked. File links/local
+servers are not GitHub Pages deployment. These are instruction-contract checks, not end-to-end
+proof that an external agent obeys the instructions.
 
 ### P0.7 Five-second comprehension
 
@@ -169,7 +195,10 @@ All P1 gates must pass before ReportKit is described as a technical preview.
 **Action & Risk**
 
 - Explicit report-date boundaries for overdue and due-in-seven-days.
-- Complete items excluded from All open.
+- All attention selects declared attention statuses or an explicit nonblank blocker; health
+  status is not an open/closed lifecycle.
+- Date queues use the UTC date of `generatedAt`, exclude terminal/healthy statuses unless blocked,
+  and include both today and today + 7 in the upcoming window.
 - Missing due dates do not become overdue.
 - Overlapping views remain valid and are not presented as additive buckets.
 - Every selected tile reconciles with rows and has a static route back.

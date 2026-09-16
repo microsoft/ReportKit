@@ -28,6 +28,12 @@
     "responsive": true,
     "printable": true
   },
+  "implementationCapabilities": {
+    "multiPage": false,
+    "scriptFree": true,
+    "responsive": true,
+    "printable": true
+  },
   "compatibility": {
     "minimumReportKitVersion": "0.1.0"
   }

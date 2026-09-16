@@ -7,7 +7,7 @@
   "required": [
     "manifestVersion", "reportKitVersion", "schemaVersion", "template",
     "reportId", "generatedAt", "dataAsOf", "classification",
-    "pageCount", "itemCount", "files", "validation"
+    "pageCount", "itemCount", "files", "validation", "reproducibility"
   ],
   "properties": {
     "manifestVersion": { "const": "1.0" },
@@ -35,6 +35,35 @@
       "type": "array", "minItems": 1, "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
     },
+    "reproducibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalModelDigest", "configurationDigest", "renderer", "sourceIdentifiers", "artifactHashes"],
+      "properties": {
+        "canonicalModelDigest": { "$ref": "#/$defs/digest" },
+        "configurationDigest": { "$ref": "#/$defs/digest" },
+        "renderer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "digest"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "digest": { "$ref": "#/$defs/digest" }
+          }
+        },
+        "sourceIdentifiers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "artifactHashes": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "$ref": "#/$defs/digest" }
+        }
+      }
+    },
     "validation": {
       "type": "object",
       "additionalProperties": false,
@@ -46,5 +75,8 @@
         "info": { "type": "integer", "minimum": 0 }
       }
     }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
   }
 }

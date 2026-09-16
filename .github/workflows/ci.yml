@@ -9,12 +9,17 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.12"]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
       - run: python -B -m unittest discover -s tests -v
 
   visual:
@@ -24,25 +29,19 @@ jobs:
     env:
       REPORTKIT_SCREENSHOT_CHANNEL: chromium
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: tests/visual/package-lock.json
-      - run: npm ci
+      - run: npm ci --registry=https://registry.npmjs.org
         working-directory: tests/visual
       - run: python -B scripts/prepare_marketing_pages.py
-      - run: |
-          python -B scripts/build \
-            --template executive-health \
-            --data examples/operational-snapshot/canonical-report.json \
-            --config examples/operational-snapshot/executive-health.config.json \
-            --output examples/operational-snapshot/generated/executive-health \
-            --overwrite
+      - run: python -B scripts/build-examples --overwrite
       - run: |
           python -B scripts/build-template \
             --template examples/custom-template-project/templates/contoso-release-review \
@@ -51,16 +50,16 @@ jobs:
             --lock examples/custom-template-project/reportkit.lock.json \
             --output examples/custom-template-project/generated/release-review \
             --overwrite
+      - run: node scripts/check-accessibility.mjs
       - run: node scripts/capture-screenshots.mjs
+      - run: git diff --exit-code
       - name: Upload captures for review
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: reportkit-visual-captures
           path: docs/assets/screenshots
           retention-days: 7
           if-no-files-found: error
       - name: Check generated and visual artifacts are current
-        run: |
-          git -c safe.directory="$GITHUB_WORKSPACE" rev-parse --show-toplevel
-          git -c safe.directory="$GITHUB_WORKSPACE" diff --exit-code -- templates showcase examples/operational-snapshot/generated examples/custom-template-project/generated docs/assets/screenshots
+        run: python -B scripts/check-generated-clean.py

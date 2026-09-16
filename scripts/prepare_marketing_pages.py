@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare public-safe prototype pages, interaction states, and the local showcase."""
+"""Prepare the local showcase and clearly labeled archived design prototypes."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / "templates"
+BUILTINS = ("executive-health", "action-risk", "portfolio-team", "operational-health", "compliance-readiness")
 
 
 def normalize_prototype(path: Path) -> None:
@@ -34,7 +35,7 @@ def normalize_prototype(path: Path) -> None:
             )
             text = re.sub(
                 r"(<body[^>]*>)",
-                r"\1<div class=\"prototype-truth\" role=\"note\">Approved hand-authored design prototype · Values are illustrative and are not generated from the current canonical sample.</div>",
+                r'\1<div class="prototype-truth" role="note">Approved hand-authored design prototype · Values are illustrative and are not generated from the current canonical sample.</div>',
                 text,
                 count=1,
             )
@@ -81,7 +82,37 @@ def normalize_prototype(path: Path) -> None:
 
 def normalize_companion_metadata(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
+    text = text.replace(r'\"prototype-truth\"', '"prototype-truth"').replace(r'\"note\"', '"note"')
+    text = text.replace("data-canonical=", "data-design-field=")
+    text = text.replace("data-derived-from=", "data-design-derived-from=")
+    text = text.replace(
+        "Generated deterministically from schema 1.0",
+        "Archived hand-authored prototype · Illustrative values · Not canonical-generated",
+    )
+    text = text.replace(
+        "Generated deterministically from canonical schema 1.0",
+        "Archived hand-authored prototype · Illustrative values · Not canonical-generated",
+    )
+    canonical_interaction = path.parent.name == "action-risk" and path.name in {
+        "action-risk.html", "action-risk-overdue.html",
+        "action-risk-blocked.html", "action-risk-due-seven-days.html",
+    }
+    label = (
+        "Archived canonical-populated interaction prototype · Not built-in renderer output."
+        if canonical_interaction else
+        "Archived hand-authored design prototype · Illustrative values, not generated from canonical data."
+    )
+    notice = (
+        '<div class="prototype-truth" role="note" style="margin:0;background:#fff2d8;'
+        'color:#704000;padding:10px 18px;text-align:center;font-weight:750">'
+        f'{label}</div>'
+    )
+    if re.search(r'<div class="prototype-truth"[^>]*>', text):
+        text = re.sub(r'<div class="prototype-truth"[^>]*>.*?</div>', lambda _: notice, text, count=1)
+    else:
+        text = re.sub(r"(<body[^>]*>)", lambda match: match[1] + notice, text, count=1)
     if "Public sample" in text:
+        path.write_text(text, encoding="utf-8", newline="\n")
         return
     text = re.sub(
         r"(<header><strong>.*?</strong>)(</header>)",
@@ -126,7 +157,7 @@ def action_state(
     counts: dict[str, int],
 ) -> str:
     links = [
-        ("All open", "action-risk.html", "all"),
+        ("All attention", "action-risk.html", "all"),
         ("Overdue", "action-risk-overdue.html", "overdue"),
         ("Blocked", "action-risk-blocked.html", "blocked"),
         ("Due in 7 days", "action-risk-due-seven-days.html", "due"),
@@ -152,7 +183,7 @@ def action_state(
 @media(max-width:800px){{.hero{{grid-template-columns:1fr}}.tiles{{grid-template-columns:repeat(2,1fr)}}}}
 @media(max-width:620px){{.tiles{{grid-template-columns:1fr}}table,tbody,tr,td{{display:block;width:100%}}thead{{position:absolute;width:1px;height:1px;overflow:hidden}}tr{{padding:10px;border-top:1px solid var(--line)}}td{{border:0;padding:7px}}footer{{display:grid}}}}
 @media(prefers-reduced-motion:reduce){{*{{transition:none!important}}}}@media print{{body{{background:#fff}}.tile,.queue{{box-shadow:none}}}}
-</style></head><body><div class="prototype-truth" role="note" style="margin:0;background:#fff2d8;color:#704000;border-bottom:1px solid #e9c978;padding:10px 18px;text-align:center;font-weight:750;font-size:.82rem">Approved design prototype populated from the public canonical sample · The production Action &amp; Risk renderer is not implemented.</div><header><div class="shell mast"><span class="brand">ReportKit · Action &amp; Risk v1.0</span><span class="class">Public sample</span></div><div class="shell hero"><div><p class="eyebrow">Operator action brief</p><h1>{escape(title)}</h1><p>Canonical sample rendered through the prototype design</p></div><section class="summary"><h2>Prototype state</h2><p><strong>{len(rows)} canonical records match this selection.</strong></p><div class="meta"><span>Period<br><strong>Week ending 15 Sep 2026</strong></span><span>Freshness<br><strong>Fresh · 5 min old</strong></span><span>Data as of<br><strong>15 Sep · 17:55 UTC</strong></span><span>Generated prototype<br><strong>15 Sep · 18:00 UTC</strong></span></div></section></div></header><main class="shell"><nav class="tiles" aria-label="Action queue filters">{tiles}</nav><section class="queue"><div class="queue-head"><div><h2>{escape(title)}</h2><p>Selected prototype filter: {escape(title)}</p></div><strong>{len(rows)} canonical records</strong></div><table><caption style="position:absolute;width:1px;height:1px;overflow:hidden">Canonical records in the prototype action queue</caption><thead><tr><th>Action</th><th>Ownership</th><th>Due / ETA</th><th>Status / blocker</th><th>Next action</th></tr></thead><tbody>{body}</tbody></table></section><footer><span>Prototype design · Facts from canonical-report.json</span><a href="action-risk.html">Reset to All attention</a></footer></main></body></html>"""
+</style></head><body><div class="prototype-truth" role="note" style="margin:0;background:#fff2d8;color:#704000;border-bottom:1px solid #e9c978;padding:10px 18px;text-align:center;font-weight:750;font-size:.82rem">Archived canonical-populated interaction prototype · Not built-in renderer output.</div><header><div class="shell mast"><span class="brand">ReportKit · Action &amp; Risk v1.0</span><span class="class">Public sample</span></div><div class="shell hero"><div><p class="eyebrow">Operator action brief</p><h1>{escape(title)}</h1><p>Canonical sample populated into the archived interaction prototype</p></div><section class="summary"><h2>Prototype state</h2><p><strong>{len(rows)} canonical records match this selection.</strong></p><div class="meta"><span>Period<br><strong>Week ending 15 Sep 2026</strong></span><span>Freshness<br><strong>Fresh · 5 min old</strong></span><span>Data as of<br><strong>15 Sep · 17:55 UTC</strong></span><span>Generated prototype<br><strong>15 Sep · 18:00 UTC</strong></span></div></section></div></header><main class="shell"><nav class="tiles" aria-label="Action queue filters">{tiles}</nav><section class="queue"><div class="queue-head"><div><h2>{escape(title)}</h2><p>Selected prototype filter: {escape(title)}</p></div><strong>{len(rows)} canonical records</strong></div><table><caption style="position:absolute;width:1px;height:1px;overflow:hidden">Canonical records in the prototype action queue</caption><thead><tr><th>Action</th><th>Ownership</th><th>Due / ETA</th><th>Status / blocker</th><th>Next action</th></tr></thead><tbody>{body}</tbody></table></section><footer><span>Prototype design · Facts from canonical-report.json</span><a href="action-risk.html">Reset to All attention</a></footer></main></body></html>"""
 
 
 def portfolio_detail() -> str:
@@ -172,11 +203,11 @@ body{{margin:0;background:#edf2f7;color:#15233a;font:16px/1.5 "Segoe UI",Arial,s
 
 def showcase() -> str:
     cards = [
-        ("Executive Health", "Do leaders need to intervene?", "../examples/operational-snapshot/generated/executive-health/index.html", "Generated end to end", "../docs/assets/screenshots/executive-health-hero.png"),
-        ("Action & Risk", "What must happen next?", "../templates/action-risk/action-risk.html", "Approved prototype", "../docs/assets/screenshots/action-risk-hero.png"),
-        ("Portfolio / Team", "Which teams carry the risk?", "../templates/portfolio-team/portfolio-team.html", "Approved prototype", "../docs/assets/screenshots/portfolio-team-hero.png"),
-        ("Operational Health", "What regressed?", "../templates/operational-health/operational-health.html", "Approved prototype", "../docs/assets/screenshots/operational-health-hero.png"),
-        ("Compliance / Readiness", "Can we proceed?", "../templates/compliance-readiness/compliance-readiness.html", "Approved prototype", "../docs/assets/screenshots/compliance-readiness-hero.png"),
+        ("Executive Health", "Do leaders need to intervene?", "../examples/operational-snapshot/generated/executive-health/index.html", "Generated · Experimental", "../docs/assets/screenshots/executive-health-hero.png"),
+        ("Action & Risk", "What must happen next?", "../examples/operational-snapshot/generated/action-risk/index.html", "Generated · Experimental", "../docs/assets/screenshots/action-risk-hero.png"),
+        ("Portfolio / Team", "Which teams carry the risk?", "../examples/operational-snapshot/generated/portfolio-team/index.html", "Generated · Experimental", "../docs/assets/screenshots/portfolio-team-hero.png"),
+        ("Operational Health", "What regressed?", "../examples/operational-snapshot/generated/operational-health/index.html", "Generated · Experimental", "../docs/assets/screenshots/operational-health-hero.png"),
+        ("Compliance / Readiness", "Can we proceed?", "../examples/operational-snapshot/generated/compliance-readiness/index.html", "Generated · Experimental", "../docs/assets/screenshots/compliance-readiness-hero.png"),
     ]
     card_html = "".join(
         f'<a class="card" href="{href}"><img src="{image}" alt=""><div class="card-body"><span class="status">{escape(status)}</span><h2>{escape(name)}</h2><p>{escape(question)}</p><strong>Open report →</strong></div></a>'
@@ -184,15 +215,15 @@ def showcase() -> str:
     )
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ReportKit Showcase</title><style>
 body{{margin:0;background:#edf2f7;color:#14213a;font:16px/1.5 "Segoe UI",Arial,sans-serif}}*{{box-sizing:border-box}}a{{color:inherit}}a:focus-visible{{outline:3px solid #66d0ff;outline-offset:4px}}header{{background:linear-gradient(140deg,#07192e,#103154);color:#fff;padding:70px 0}}.shell{{width:min(calc(100% - 36px),1200px);margin:auto}}.eyebrow{{color:#66d0ff;text-transform:uppercase;font-weight:800;letter-spacing:.12em}}h1{{font-size:clamp(3rem,7vw,6rem);line-height:.95;margin:12px 0;max-width:900px}}.lead{{color:#c5d4e3;font-size:1.2rem;max-width:760px}}.proof{{display:flex;gap:12px;flex-wrap:wrap;margin-top:25px}}.proof span{{border:1px solid #ffffff35;border-radius:99px;padding:8px 12px}}main{{padding:45px 0}}.grid{{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}}.card{{grid-column:span 2;display:block;overflow:hidden;background:#fff;border:1px solid #d6e0eb;border-radius:18px;text-decoration:none;box-shadow:0 15px 42px #14284812}}.card:first-child,.card:nth-child(2){{grid-column:span 3}}.card img{{display:block;width:100%;aspect-ratio:1.44;object-fit:cover;object-position:top}}.card-body{{padding:22px}}.card h2{{font-size:1.45rem;margin:20px 0 5px}}.card p{{color:#607086}}.card strong{{color:#2875e2}}.status{{display:inline-flex;padding:5px 9px;border-radius:99px;background:#eaf3ff;color:#225f9f;font-size:.7rem;font-weight:800;text-transform:uppercase}}.boundary,.sample{{margin-top:28px;padding:28px;border-radius:18px}}.boundary{{background:#07192e;color:#fff}}.boundary strong{{display:block;font-size:1.2rem;margin:7px 0}}.sample{{background:#fff;border:1px solid #d6e0eb}}.sample a{{color:#2875e2;font-weight:800}}footer{{padding:28px 0;color:#607086}}@media(max-width:750px){{.grid{{grid-template-columns:1fr}}.card,.card:first-child,.card:nth-child(2){{grid-column:auto}}}}
-</style></head><body><header><div class="shell"><p class="eyebrow">Open-source Hack Week project</p><h1>Turn operational data into decision-ready static reports.</h1><p class="lead">One model. Five report designs. One generated today.</p><div class="proof"><span>Executive Health renderer</span><span>Four design prototypes</span><span>Static-first</span><span>Validation baseline</span></div></div></header><main class="shell"><div class="grid">{card_html}</div><section class="sample"><h2>Bring your own template</h2><p>Project-local declarative packs compose approved components without executable template code.</p><p><span class="status">Project template · declarative</span></p><a href="../examples/custom-template-project/generated/release-review/index.html">Open the Release Review example →</a></section><section class="sample"><h2>Inspect the generated facts</h2><p>The Executive Health renderer uses this public synthetic canonical snapshot. The other four cards are explicitly illustrative design prototypes.</p><a href="../examples/operational-snapshot/canonical-report.json">Open the 401-record canonical sample →</a></section><section class="boundary"><span>Product boundary</span><strong>The source determines the facts.</strong><strong>The template determines how those facts are communicated.</strong><strong>The destination determines where the generated report lives.</strong></section></main><footer class="shell">ReportKit · Experimental local showcase · No publication performed</footer></body></html>"""
+</style></head><body><header><div class="shell"><p class="eyebrow">Open-source Hack Week project</p><h1>Turn operational data into decision-ready static reports.</h1><p class="lead">One canonical source. Five generated reports.</p><div class="proof"><span>Five built-in renderers</span><span>One public sample</span><span>Static-first</span><span>Validation baseline</span></div></div></header><main class="shell"><div class="grid">{card_html}</div><section class="sample"><h2>Bring your own template</h2><p>Project-local declarative packs compose approved components without executable template code. The single-page foundation requires a digest-bound lock.</p><p><span class="status">Project template · declarative</span></p><a href="../examples/custom-template-project/generated/release-review/index.html">Open the Release Review example →</a></section><section class="sample"><h2>Inspect the generated facts</h2><p>All five reports use the same public synthetic canonical snapshot with per-template configuration. Its 401 records remain source records, not 401 services or compliance controls. Missing operational or compliance facts are not invented.</p><a href="../examples/operational-snapshot/canonical-report.json">Open the 401-record canonical sample →</a><p>Legacy files under templates are archived design references. Action &amp; Risk interaction pages are canonical-populated prototypes; other archived values are illustrative. The cards above open built-in generated examples instead.</p></section><section class="sample"><h2>Local preview, not deployment</h2><p>Open this showcase from your local checkout. GitHub HTML links show source, not browser previews. Pages, a publisher, a generic CSV adapter, and executable guided init/resume are not implemented. Data mapping is manual and agent-assisted.</p></section><section class="boundary"><span>Product boundary</span><strong>The source determines the facts.</strong><strong>The template determines how those facts are communicated.</strong><strong>The destination determines where the generated report lives.</strong></section></main><footer class="shell">ReportKit · Experimental local showcase · No publication performed</footer></body></html>"""
 
 
 def social_preview() -> str:
-    return """<!doctype html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box}body{margin:0;width:1200px;height:630px;overflow:hidden;background:linear-gradient(135deg,#07192e,#12395f);color:#fff;font:22px/1.25 "Segoe UI",Arial,sans-serif}.wrap{padding:54px}.eyebrow{color:#66d0ff;text-transform:uppercase;font-size:16px;font-weight:800;letter-spacing:.14em}h1{font-size:62px;line-height:.98;margin:13px 0 14px;max-width:800px}.sub{color:#c6d5e4}.screens{position:absolute;right:45px;bottom:42px;width:500px;height:310px}.screens img{position:absolute;width:330px;border:5px solid #fff;border-radius:12px;box-shadow:0 18px 50px #0008}.screens img:nth-child(1){right:78px;top:0;z-index:3}.screens img:nth-child(2){left:0;bottom:0;transform:rotate(-5deg)}.screens img:nth-child(3){right:0;bottom:0;transform:rotate(5deg)}.footer{position:absolute;left:54px;bottom:55px;font-weight:700}.footer span{margin-right:24px}</style></head><body><div class="wrap"><p class="eyebrow">ReportKit</p><h1>One model.<br>Five report designs.<br>One generated today.</h1><p class="sub">Executive Health generated · Four approved prototypes</p><div class="screens"><img src="../docs/assets/screenshots/executive-health-hero.png"><img src="../docs/assets/screenshots/action-risk-hero.png"><img src="../docs/assets/screenshots/portfolio-team-hero.png"></div><div class="footer"><span>Open source</span><span>Static-first</span><span>Validation baseline</span></div></div></body></html>"""
+    return """<!doctype html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box}body{margin:0;width:1200px;height:630px;overflow:hidden;background:linear-gradient(135deg,#07192e,#12395f);color:#fff;font:22px/1.25 "Segoe UI",Arial,sans-serif}.wrap{padding:54px}.eyebrow{color:#66d0ff;text-transform:uppercase;font-size:16px;font-weight:800;letter-spacing:.14em}h1{font-size:62px;line-height:.98;margin:13px 0 14px;max-width:800px}.sub{color:#c6d5e4}.screens{position:absolute;right:45px;bottom:42px;width:500px;height:310px}.screens img{position:absolute;width:330px;border:5px solid #fff;border-radius:12px;box-shadow:0 18px 50px #0008}.screens img:nth-child(1){right:78px;top:0;z-index:3}.screens img:nth-child(2){left:0;bottom:0;transform:rotate(-5deg)}.screens img:nth-child(3){right:0;bottom:0;transform:rotate(5deg)}.footer{position:absolute;left:54px;bottom:55px;font-weight:700}.footer span{margin-right:24px}</style></head><body><div class="wrap"><p class="eyebrow">ReportKit · Experimental</p><h1>One canonical source.<br>Five generated<br>reports.</h1><p class="sub">Five built-in renderers · Same public sample</p><div class="screens"><img src="../docs/assets/screenshots/executive-health-hero.png"><img src="../docs/assets/screenshots/action-risk-hero.png"><img src="../docs/assets/screenshots/portfolio-team-hero.png"></div><div class="footer"><span>Open source</span><span>Static-first</span><span>Validation baseline</span></div></div></body></html>"""
 
 
 def presentation_title() -> str:
-    return """<!doctype html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box}body{margin:0;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(135deg,#07192e,#0e3155);color:#fff;font:28px/1.3 "Segoe UI",Arial,sans-serif}.wrap{padding:100px}.eyebrow{color:#66d0ff;text-transform:uppercase;font-size:20px;font-weight:800;letter-spacing:.15em}h1{font-size:108px;line-height:.95;margin:24px 0;max-width:1250px}.lead{color:#c5d4e3;font-size:34px;max-width:1100px}.proof{display:flex;gap:18px;margin-top:48px}.proof span{border:1px solid #ffffff45;border-radius:99px;padding:12px 18px}.shot{position:absolute;right:90px;bottom:70px;width:680px;border:7px solid #fff;border-radius:20px;box-shadow:0 30px 80px #0008}</style></head><body><div class="wrap"><p class="eyebrow">ReportKit · Experimental Hack Week preview</p><h1>Turn operational data into decision-ready static reports.</h1><p class="lead">One generated report. Four approved prototypes. No backend.</p><div class="proof"><span>Skill-first</span><span>Deterministic</span><span>Validation baseline</span></div><img class="shot" src="../docs/assets/screenshots/executive-health-hero.png"></div></body></html>"""
+    return """<!doctype html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box}body{margin:0;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(135deg,#07192e,#0e3155);color:#fff;font:28px/1.3 "Segoe UI",Arial,sans-serif}.wrap{padding:100px}.eyebrow{color:#66d0ff;text-transform:uppercase;font-size:20px;font-weight:800;letter-spacing:.15em}h1{font-size:108px;line-height:.95;margin:24px 0;max-width:1250px}.lead{color:#c5d4e3;font-size:34px;max-width:1100px}.proof{display:flex;gap:18px;margin-top:48px}.proof span{border:1px solid #ffffff45;border-radius:99px;padding:12px 18px}.shot{position:absolute;right:90px;bottom:70px;width:680px;border:7px solid #fff;border-radius:20px;box-shadow:0 30px 80px #0008}</style></head><body><div class="wrap"><p class="eyebrow">ReportKit · Experimental Hack Week preview</p><h1>Turn operational data into decision-ready static reports.</h1><p class="lead">One canonical source. Five generated reports. No backend.</p><div class="proof"><span>Skill-first</span><span>Deterministic</span><span>Validation baseline</span></div><img class="shot" src="../docs/assets/screenshots/executive-health-hero.png"></div></body></html>"""
 
 
 def walkthrough() -> str:
@@ -204,14 +235,28 @@ def walkthrough() -> str:
         ("The assurance view", "Can we proceed?", "../docs/assets/screenshots/compliance-readiness-hero.png"),
     ]
     content = "".join(
-        f'<section class="slide"><div><p>One model · Five designs · One generated today</p><h1>{escape(title)}</h1><h2>{escape(question)}</h2></div><img src="{image}"></section>'
+        f'<section class="slide"><div><p>One canonical source · Five generated reports · Experimental</p><h1>{escape(title)}</h1><h2>{escape(question)}</h2></div><img src="{image}"></section>'
         for title, question, image in slides
     )
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>*{{box-sizing:border-box}}body{{margin:0;width:1280px;height:720px;overflow:hidden;background:#07192e;color:#fff;font:20px/1.3 "Segoe UI",Arial,sans-serif}}.slide{{position:absolute;inset:0;display:grid;grid-template-columns:390px 1fr;gap:34px;align-items:center;padding:45px;opacity:0;animation:show 35s linear infinite}}.slide:nth-child(1){{animation-delay:0s}}.slide:nth-child(2){{animation-delay:7s}}.slide:nth-child(3){{animation-delay:14s}}.slide:nth-child(4){{animation-delay:21s}}.slide:nth-child(5){{animation-delay:28s}}.slide p{{color:#66d0ff;text-transform:uppercase;font-size:14px;font-weight:800;letter-spacing:.13em}}h1{{font-size:54px;line-height:1;margin:14px 0}}h2{{color:#c5d4e3;font-size:24px;font-weight:500}}img{{width:100%;border:5px solid #fff;border-radius:16px;box-shadow:0 24px 60px #0008}}@keyframes show{{0%,19%{{opacity:1}}20%,100%{{opacity:0}}}}</style></head><body>{content}</body></html>"""
 
 
 def main() -> int:
-    for template in ("executive-health", "action-risk", "portfolio-team", "operational-health", "compliance-readiness"):
+    for template in BUILTINS:
+        sample = ROOT / "examples" / "operational-snapshot" / "generated" / template
+        for name in ("index.html", "report-manifest.json", "validation-report.json"):
+            if not (sample / name).is_file():
+                raise FileNotFoundError(f"Build and validate the {template} sample before preparing marketing pages: missing {name}")
+        manifest = json.loads((sample / "report-manifest.json").read_text(encoding="utf-8"))
+        validation = json.loads((sample / "validation-report.json").read_text(encoding="utf-8"))
+        if (
+            manifest.get("template", {}).get("id") != template
+            or manifest.get("classification") != "Public sample"
+            or validation.get("status") != "passed"
+            or validation.get("errors")
+        ):
+            raise ValueError(f"Marketing requires a validated public {template} sample")
+    for template in BUILTINS:
         normalize_prototype(TEMPLATES / template / "prototype.html")
 
     aliases = {
