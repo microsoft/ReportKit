@@ -173,6 +173,28 @@ class BuiltinRendererTests(unittest.TestCase):
         for filename, ids in expected.items():
             self.assertIn(f'href="{filename}"><strong>{len(ids)}</strong>', pages["index.html"])
 
+    def test_action_filters_honor_explicit_lifecycle(self):
+        value = model()
+        value["items"].extend([
+            {
+                "id": "closed-critical", "title": "Closed critical", "status": "critical",
+                "lifecycle": "closed", "blocker": "Historical blocker", "dueDate": "2026-09-14",
+            },
+            {
+                "id": "open-healthy", "title": "Open healthy", "status": "healthy",
+                "lifecycle": "open", "dueDate": "2026-09-14",
+            },
+        ])
+        pages = self.render("action-risk", value)
+        attention = set(Page(pages["index.html"]).items)
+        overdue = set(Page(pages["overdue.html"]).items)
+        blocked = set(Page(pages["blocked.html"]).items)
+        all_records = set(Page(pages["all-records.html"]).items)
+        self.assertIn("open-healthy", attention)
+        self.assertIn("open-healthy", overdue)
+        self.assertNotIn("closed-critical", attention | overdue | blocked)
+        self.assertTrue({"closed-critical", "open-healthy"}.issubset(all_records))
+
     def test_item_order_priority_blocker_due_then_id(self):
         value = model()
         value["items"] = [
@@ -347,8 +369,12 @@ class BuiltinRendererTests(unittest.TestCase):
             self.assertNotIn("Preview report", self.render(template)["index.html"])
 
     def test_compliance_preserves_evidence_and_does_not_invent_approval(self):
-        html = self.render("compliance-readiness")["index.html"]
-        self.assertEqual({item["id"] for item in model()["items"]}, set(Page(html).items))
+        value = model()
+        value["items"][0]["category"] = "requirement"
+        value["items"][0]["readinessGate"] = {"status": "in-progress", "decision": "hold"}
+        html = self.render("compliance-readiness", value)["index.html"]
+        self.assertEqual({item["id"] for item in value["items"]}, set(Page(html).items))
+        self.assertEqual(1, html.count('class="requirement"'))
         self.assertIn("Evidence artifact", html)
         self.assertIn("exception approval state are not supplied", html)
         self.assertIn("No release approval", html)

@@ -25,6 +25,7 @@ _ATTENTION = {
     "pending-review", "not-started",
 }
 _RESOLVED = {"healthy", "passed", "complete", "not-applicable"}
+_TERMINAL_LIFECYCLES = {"closed", "completed", "cancelled"}
 _STATUS = _ATTENTION | _RESOLVED | {"unknown"}
 _PRIORITY = {"critical": 0, "high": 1, "medium": 2, "low": 3, "unknown": 4}
 _TITLES = {
@@ -207,6 +208,23 @@ def _date(value: str | None) -> date | None:
         return None
 
 
+def _is_open_action(item: dict) -> bool:
+    lifecycle = item.get("lifecycle")
+    if lifecycle in _TERMINAL_LIFECYCLES:
+        return False
+    if lifecycle == "open":
+        return True
+    return item.get("status") not in _RESOLVED or _has_blocker(item)
+
+
+def _needs_attention(item: dict) -> bool:
+    return _is_open_action(item) and (
+        item.get("lifecycle") == "open"
+        or item.get("status") in _ATTENTION
+        or _has_blocker(item)
+    )
+
+
 def _display_instant(value: str | None) -> str:
     from reportkit_engine import _format_datetime
 
@@ -302,6 +320,9 @@ class _Renderer:
         return ", ".join(self._group_link(group) for group in groups) or "Ungrouped — no supplied group membership"
 
     def _record_sections(self, item: dict) -> tuple[str, str, str, str]:
+        exception = item.get("exception") or {}
+        readiness = item.get("readinessGate") or {}
+        recovery = item.get("recoveryMilestones") or []
         status = _fields([
             ("Status", _badge(item.get("status"))),
             ("Lifecycle", _text(item.get("lifecycle"), "Not supplied")),
@@ -327,14 +348,48 @@ class _Renderer:
         ])
         evidence = _fields([
             ("Evidence state", _text(item.get("evidenceState"), "unknown")),
-            ("Exception state", _text((item.get("exception") or {}).get("status"), "Not supplied")),
-            ("Exception expiry", _text((item.get("exception") or {}).get("expiresAt"), "Not supplied")),
-            ("Readiness gate", _text((item.get("readinessGate") or {}).get("status"), "Not supplied")),
-            ("Readiness decision", _text((item.get("readinessGate") or {}).get("decision"), "Not supplied")),
+            ("Exception state", _text(exception.get("status"), "Not supplied")),
+            ("Exception expiry", _text(exception.get("expiresAt"), "Not supplied")),
+            ("Exception summary", _text(exception.get("summary"), "Not supplied")),
+            ("Exception evidence", self._links(exception.get("evidence"), "No exception evidence supplied.")),
+            ("Readiness gate", _text(readiness.get("status"), "Not supplied")),
+            ("Readiness decision", _text(readiness.get("decision"), "Not supplied")),
+            ("Readiness summary", _text(readiness.get("summary"), "Not supplied")),
+            ("Recovery milestones", self.milestones(recovery, compact=True)),
             ("Source links", self._links(item.get("links"))),
             ("Evidence", self._links(item.get("evidence"), "Unknown — no evidence supplied.")),
         ])
         return status, ownership, action, evidence
+
+    def milestones(self, milestones: list[dict] | None, compact: bool = False) -> str:
+        if not milestones:
+            return "None supplied" if compact else _empty("No milestones supplied.")
+        items = "".join(
+            f'<li>{_badge(milestone.get("status"))}<strong>{_text(milestone.get("label"))}</strong>'
+            f'<span>Target: {_text(milestone.get("targetDate"))} · Completed: {_text(milestone.get("completedDate"))}</span>'
+            f'<p>{_text(milestone.get("summary"), "Summary not supplied.")}</p></li>'
+            for milestone in _ordered(milestones)
+        )
+        return f'<ul class="signals">{items}</ul>'
+
+    def quality_notice(self) -> str:
+        issues = []
+        coverage = self.model.get("provenance", {}).get("coverage", [])
+        for entry in coverage:
+            if entry.get("state") != "complete":
+                issues.append(
+                    f'{_text(entry.get("source"))}: {_text(entry.get("state"), "unknown")}'
+                    f' — {_text(entry.get("summary"), "No coverage detail supplied.")}'
+                )
+        if not self.model.get("trends"):
+            issues.append("Trend history is not supplied; trend-dependent conclusions remain unknown.")
+        if not issues:
+            return ""
+        return (
+            '<aside class="notice" aria-label="Data quality warnings"><strong>Data quality and coverage warnings</strong><ul>'
+            + "".join(f"<li>{issue}</li>" for issue in issues)
+            + "</ul></aside>"
+        )
 
     def records(self, items: list[dict], caption: str, compliance: bool = False) -> str:
         if not items:
@@ -556,7 +611,7 @@ class _Renderer:
             '<p>Generated from canonical data for review.</p></aside>'
             if self.config.get("output", {}).get("includePrototypeNotice") else ""
         )
-        coverage = (
+        displayed = (
             f"Overview of {len(self.groups)} groups and {len(self.items)} canonical records"
             if self.template_id == "portfolio-team" and filename == "index.html"
             else f"{selected} of {len(self.items)} canonical records"
@@ -580,16 +635,16 @@ class _Renderer:
 <div class="metadata"><span>Data as of<strong>{_display_instant(report.get('dataAsOf'))}</strong></span>
 <span>Generated at<strong>{_display_instant(report.get('generatedAt'))}</strong></span>
 <span class="freshness {freshness_class}">Freshness: {escape(freshness)}</span>
-<span>View coverage<strong>{coverage}</strong></span></div></section></div></header>
+<span>Displayed records<strong>{displayed}</strong></span></div></section></div></header>
 <div class="shell"><nav class="nav" aria-label="Report pages">{navigation}</nav>
-<main id="main">{preview}{content}</main>{self._footer()}</div></body></html>"""
+<main id="main">{preview}{self.quality_notice()}{content}</main>{self._footer()}</div></body></html>"""
 
     def action(self) -> dict[str, str]:
         generated = _instant(self.model.get("report", {}).get("generatedAt"))
         today = generated.date() if generated else None
-        eligible = [item for item in self.items if item.get("status") not in _RESOLVED or _has_blocker(item)]
+        eligible = [item for item in self.items if _is_open_action(item)]
         selections = [
-            ("index.html", "All attention", [item for item in self.items if item.get("status") in _ATTENTION or _has_blocker(item)]),
+            ("index.html", "All attention", [item for item in self.items if _needs_attention(item)]),
             ("overdue.html", "Overdue", [item for item in eligible if today and _date(item.get("dueDate")) and _date(item["dueDate"]) < today]),
             ("blocked.html", "Blocked", [item for item in eligible if item.get("status") == "blocked" or _has_blocker(item)]),
             ("due-next-seven-days.html", "Due in the next seven days", [item for item in eligible if today and _date(item.get("dueDate")) and today <= _date(item["dueDate"]) <= today + timedelta(days=7)]),
@@ -598,9 +653,9 @@ class _Renderer:
         nav = [(label, filename) for filename, label, _ in selections]
         cards = self.stats([(label, len(items), filename) for filename, label, items in selections])
         rule = (
-            "Attention includes warning, critical, blocked, failed, in-progress, pending-review and not-started statuses, or an explicit blocker. "
+            "Closed, completed and cancelled lifecycle records are excluded from action queues. An explicit open lifecycle remains actionable regardless of health status. "
+            "When lifecycle is missing or unknown, attention uses warning, critical, blocked, failed, in-progress, pending-review and not-started statuses, or an explicit blocker. "
             "Overdue is strictly before the generated UTC date; due next seven days includes that date through seven days later. "
-            "Healthy, passed, complete and not-applicable records are excluded from date and blocked queues unless they have an explicit blocker. "
             "Queues may overlap; counts are not additive. Ordering: priority, explicit blocker first, due date, then ID."
         )
         result = {}
@@ -608,6 +663,7 @@ class _Renderer:
             content = cards + self.section(title, self.records(items, title), f"Snapshot UTC date: {today.isoformat() if today else 'Unknown; date filters unavailable'}. {len(items)} matching records.")
             content += f'<details class="appendix"><summary>Queue definitions</summary><p>{escape(rule)}</p></details>'
             if filename == "index.html":
+                content += self.section("Executive outlook milestones", self.milestones(self.model.get("report", {}).get("outlookMilestones")))
                 content += self.section("Supplied metrics", self.metrics())
                 content += self.section("Ownership groups", self.group_cards())
                 content += self.section("Supplied signals", self.highlights())
@@ -626,6 +682,7 @@ class _Renderer:
         content += self.section("Organization summary", self.metrics(), "Supplied measures; group status is source-provided, not calculated from record counts.")
         content += self.section("Team and project rollups", self.group_cards(), "Every group opens a real member report. Membership combines both canonical membership directions and all descendants; shared records are counted once per group.")
         content += self.section("Management focus & supplied signals", self.highlights())
+        content += self.section("Executive outlook milestones", self.milestones(self.model.get("report", {}).get("outlookMilestones")))
         content += '<section id="ungrouped"><h2>Ungrouped records</h2><p class="section-copy">No membership was supplied in any group or item.</p>' + self.records(ungrouped, "Ungrouped records") + "</section>"
         content += self.section("Portfolio trends", self.trends())
         result = {
@@ -670,11 +727,17 @@ class _Renderer:
             ) + "</ul>" if signals else _empty("No warning, critical, blocked or failed records, or explicit blockers, were supplied. This does not establish overall health.")
         ))
         content += self.section("Reported changes & recovery context", self.highlights(), "Solutions and recovery actions are unknown unless supplied as record next actions; no cause is inferred.") + "</div>"
+        content += self.section("Executive outlook milestones", self.milestones(self.model.get("report", {}).get("outlookMilestones")))
         content += self.section("Service / group health matrix", self.group_cards(), "Source-provided group statuses and metric references; member links open the complete issue record.")
-        content += self.section("Complete incident / issue register", self.records(self.items, "All operational records"), "All canonical records are visible, including resolved and unknown statuses. Accountable owner, action owner, due date and ETA remain separate.")
+        content += self.section("Complete operational record register", self.records(self.items, "All operational records"), "Records retain their supplied categories; uncategorized records are not relabeled as incidents, builds or deployments. All canonical records remain visible, including resolved and unknown statuses.")
         return {"index.html": self.page("index.html", "Service operations brief", content, len(self.items), [("Operational report", "index.html")])}
 
     def compliance(self) -> dict[str, str]:
+        readiness_records = [
+            item for item in self.items
+            if item.get("category") in {"requirement", "control"} or item.get("readinessGate") is not None
+        ]
+        other_records = [item for item in self.items if item not in readiness_records]
         gates = (
             '<ol class="gate-list">' + "".join(
                 f'<li><div><strong>{self._group_link(group)}</strong>'
@@ -682,14 +745,16 @@ class _Renderer:
                 f'{_badge(group.get("status"))}</li>' for group in self.groups
             ) + "</ol>"
         ) if self.groups else _empty("No domains or gate groups supplied. Readiness is unknown.")
-        content = '<div class="notice"><strong>Assessment boundary</strong><p>Requirement and domain labels below organize supplied records; they do not establish a control framework. A group is a release gate only if the source identifies it as such. No release approval, evidence sufficiency or exception approval is inferred.</p></div>'
+        content = '<div class="notice"><strong>Assessment boundary</strong><p>Only records explicitly categorized as requirements or controls, or carrying a readiness gate, are presented as readiness assessments. Generic groups and records do not establish a control framework. No release approval, evidence sufficiency or exception approval is inferred.</p></div>'
         content += self.section("Supplied readiness measures", self.metrics())
         content += '<div class="two-column">'
-        content += self.section("Domain / gate assessment register", gates, "Only supplied groups and statuses appear here; this is not a fabricated release checklist.")
+        content += self.section("Supplied group status register", gates, "Groups retain their source-provided type and status; they are not relabeled as gates or control domains.")
         content += self.section("Assessment distribution", self.status_counts(self.items), "Counts are canonical records by their supplied status, not invented control totals.") + "</div>"
-        content += self.section("Control domains & ownership", self.group_cards(), "Membership includes descendant groups and is deduplicated. Evidence remains attached to its actual requirement record.")
-        content += self.section("Requirement & evidence register", self.records(self.items, "Requirement records", compliance=True), "Expand or collapse individual requirements without JavaScript. All details are expanded initially for print.")
+        content += self.section("Supplied groups & ownership", self.group_cards(), "Membership includes descendant groups and is deduplicated. Group labels and types remain source-provided.")
+        content += self.section("Readiness & evidence register", self.records(readiness_records, "Readiness records", compliance=True), "Only explicitly structured readiness, requirement and control records appear here.")
+        content += self.section("Other canonical records", self.records(other_records, "Other canonical records"), "Records without readiness semantics remain visible without being relabeled.")
         content += self.section("Exceptions & review decisions", '<p class="notice">A separate exceptions collection and exception approval state are not supplied by the canonical model. Any exception records or decisions supplied as items or highlights remain visible with their original status; no exception is assumed approved.</p>' + self.highlights())
+        content += self.section("Executive outlook milestones", self.milestones(self.model.get("report", {}).get("outlookMilestones")))
         content += self.section("Assessment history", self.trends())
         return {"index.html": self.page("index.html", "Evidence & readiness review", content, len(self.items), [("Readiness report", "index.html")])}
 

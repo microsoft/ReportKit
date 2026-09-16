@@ -16,13 +16,13 @@
   "reproducibility": {
     "artifactHashes": {
       ".reportkit-output.json": "sha256:c65e23af0e9840ff0b73284cb5b07ff7151612c23bf669fbdca943d6b28ff9b3",
-      "index.html": "sha256:bb91734301a278290ca53bde179b705fb8e4af7d2e8bd21899f84f9d8188f2c0",
+      "index.html": "sha256:adf0fef177102bc158c03ce9953c655b35cc6a1908bf127d0dde3ffa80dce89a",
       "validation-report.json": "sha256:874a9ad4c9cc2ead056d39acb17b3d8b7f4747f25324889141ca6e8ec44c6396"
     },
     "canonicalModelDigest": "sha256:a5779589fb61a8953b30b3a3f7d7454062b9ff63b19f5de1e3aaef792f086203",
     "configurationDigest": "sha256:c51031b6297b06de823e9e0b24e7f370d04490782ec893589bd280ad6617a043",
     "renderer": {
-      "digest": "sha256:1833960b47a78c67cea9d1789f77224f68b0f42423ccfcc194d3d61f581fc91a",
+      "digest": "sha256:188a77de1abfc72ae0a5437c054d069c7404f7d2361d2af956c43ac992e540c4",
       "id": "reportkit-python"
     },
     "sourceIdentifiers": [

@@ -243,6 +243,70 @@ class P0SecurityTests(unittest.TestCase):
             codes = {issue["code"] for issue in report["errors"]}
             self.assertTrue({"unsafe-css", "active-svg", "external-svg-resource", "invalid-csp"}.issubset(codes), report)
 
+    def test_inline_css_encoded_resources_and_late_csp_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            site = Path(temp) / "site"
+            self.assertEqual(0, self.build(site).returncode)
+            index = site / "index.html"
+            html = index.read_text(encoding="utf-8")
+            html = html.replace(
+                '<meta http-equiv="Content-Security-Policy"',
+                '<style>@\\69mport "%68%74%74%70%73://tracker.invalid/pre-csp.css";</style>'
+                '<meta http-equiv="Content-Security-Policy"',
+                1,
+            ).replace(
+                "<main ",
+                '<main style="background:url(https\\3a //tracker.invalid/style.png)" ',
+                1,
+            )
+            index.write_text(html, encoding="utf-8")
+            svg = site / "encoded.svg"
+            svg.write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg">'
+                '<style>.x{background:url(%68%74%74%70%73://tracker.invalid/svg.png)}</style>'
+                '<image href="%68%74%74%70%73://tracker.invalid/pixel"/></svg>',
+                encoding="utf-8",
+            )
+            manifest_path = site / "report-manifest.json"
+            manifest = load_json(manifest_path)
+            manifest["files"].append("encoded.svg")
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            report = validate_site(site, expected_item_count=401)
+            codes = {issue["code"] for issue in report["errors"]}
+            self.assertTrue(
+                {"csp-placement", "unsafe-css", "external-css-resource", "external-svg-resource"}.issubset(codes),
+                report,
+            )
+
+    def test_malformed_validation_messages_status_and_html_are_structured(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            site = Path(temp) / "site"
+            self.assertEqual(0, self.build(site).returncode)
+            validation_path = site / "validation-report.json"
+            validation = load_json(validation_path)
+            validation["status"] = {}
+            validation["warnings"] = [7, {"code": "valid-warning", "message": "Still structured"}]
+            validation["info"] = [["invalid"]]
+            validation["summary"] = {"errorCount": 0, "warningCount": 2, "infoCount": 1}
+            validation_path.write_text(json.dumps(validation), encoding="utf-8")
+            report = validate_site(site, expected_item_count=401)
+            codes = {issue["code"] for issue in report["errors"]}
+            self.assertIn("json-schema-type", codes)
+            self.assertIn("validation-status-invalid", codes)
+            self.assertIn("validation-status-mismatch", codes)
+            self.assertIn("valid-warning", {issue["code"] for issue in report["warnings"]})
+
+            validation_path.write_text("[]", encoding="utf-8")
+            report = validate_site(site, expected_item_count=401)
+            self.assertTrue(
+                {"invalid-json", "json-root-type"} & {issue["code"] for issue in report["errors"]},
+                report,
+            )
+
+            (site / "index.html").write_bytes(b"\xff\xfe\x00")
+            report = validate_site(site, expected_item_count=401)
+            self.assertIn("invalid-html-encoding", {issue["code"] for issue in report["errors"]})
+
     def test_nested_schema_and_timezone_errors_fail_without_crashing(self) -> None:
         model = load_json(self.model_path)
         model["trends"][0]["observations"] = "not-an-array"

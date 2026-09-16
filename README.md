@@ -1052,7 +1052,7 @@ It is explicitly supplied through canonical data or the build invocation. The ge
 
 ### What happens when data is incomplete?
 
-The report displays an explicit partial, unknown, stale, or validation state. Blocking errors prevent publication. Missing data is never silently converted into a healthy result.
+The shared built-in renderers display non-complete canonical source coverage and missing trend history as explicit warnings, while supplied unknown and stale states remain visible. Other optional missing-data states are still being expanded. Blocking errors prevent publication, and missing data is never silently converted into a healthy result.
 
 ### Can a template add explanatory prose?
 

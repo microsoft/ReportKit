@@ -187,6 +187,8 @@ def _json_file(files: dict[str, bytes], name: str, errors: list[dict[str, str]])
         if len(files[name]) > MAX_FILE_BYTES:
             raise ValueError("JSON document exceeds the template-pack byte limit.")
         value = load_json_bytes(files[name], name)
+        if not isinstance(value, dict):
+            raise ValueError("JSON document must contain an object.")
     except (KeyError, ValueError, RecursionError) as exception:
         errors.append(message("pack-json", f"Invalid JSON: {exception}", name))
         return None
@@ -417,6 +419,7 @@ def _validate_pack(path: Path, deadline: float) -> tuple[dict[str, Any], dict[st
     configuration = read_member("examples/configuration.json")
     cases = read_member("tests/cases.json")
     custom_schema_errors: list[dict[str, str]] = []
+    template_usable = False
     if config_schema is not None:
         _check_pack_budget(deadline)
         custom_schema_errors = validate_schema_definition(config_schema)
@@ -432,7 +435,9 @@ def _validate_pack(path: Path, deadline: float) -> tuple[dict[str, Any], dict[st
         errors.extend(capability_errors)
         _check_pack_budget(deadline)
         if not capability_errors:
+            previous_error_count = len(errors)
             _validate_template(template, errors)
+            template_usable = len(errors) == previous_error_count
     if layout is not None:
         _check_pack_budget(deadline)
         layout_errors = validate_instance(
@@ -466,7 +471,7 @@ def _validate_pack(path: Path, deadline: float) -> tuple[dict[str, Any], dict[st
     for name in ("README.md", "LICENSE"):
         if name in files and not files[name].decode("utf-8", errors="ignore").strip():
             errors.append(message("pack-document", f"{name} cannot be empty.", name))
-    if template is not None:
+    if template_usable:
         for name, model in (("examples/minimum.json", minimum), ("examples/canonical-report.json", canonical)):
             _check_pack_budget(deadline)
             if model is not None:

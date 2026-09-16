@@ -20,17 +20,17 @@
   "reproducibility": {
     "artifactHashes": {
       ".reportkit-output.json": "sha256:c65e23af0e9840ff0b73284cb5b07ff7151612c23bf669fbdca943d6b28ff9b3",
-      "all-records.html": "sha256:ab62bdcd2041fb6ae49b0a0c62acc524e0c23fc49653f109b063d51a70abd22e",
-      "blocked.html": "sha256:72e2e1002bb803b2eb0ca1f9b523dbe6eabfd8b106737f93faa7f92226302dca",
-      "due-next-seven-days.html": "sha256:75ad888da3addf3560c3dfc6c2d491bbeecbdd7d88439990a2362b64042fd405",
-      "index.html": "sha256:8b364d19d28e3e78051fc0ecdee3c7cd4c3c6bc5ae6788856a5163f57aefe58d",
-      "overdue.html": "sha256:3d287ba665df491fc0eadc033470e0e289015696fb54d37e49122f1a014b49c1",
+      "all-records.html": "sha256:9131ef6d82a37cb3e1b421eb0e86369a547d37e84d506b03adf86134cca36eb0",
+      "blocked.html": "sha256:11876f9e58a0348570bd36463cc59827216c1f95eba773a28ead39efd466db8c",
+      "due-next-seven-days.html": "sha256:e1b83f4b2bba80fba8713916b33aa657b4d48c95a897b7048f4f7c1f490f7354",
+      "index.html": "sha256:d86a55b57ebb0f5b489a75020c2557ba1dbcd2487563aeb1d5f74f1e5ecd2d81",
+      "overdue.html": "sha256:cf035f5ca065d5a1abc1609b8d2c69ad03afb4029bbbbcb655fdc1cc2e9f321d",
       "validation-report.json": "sha256:874a9ad4c9cc2ead056d39acb17b3d8b7f4747f25324889141ca6e8ec44c6396"
     },
     "canonicalModelDigest": "sha256:a5779589fb61a8953b30b3a3f7d7454062b9ff63b19f5de1e3aaef792f086203",
     "configurationDigest": "sha256:7bb57c02917077507c12714dd9a9610fc97bfdbe4b2a58d7275a1b730bf61771",
     "renderer": {
-      "digest": "sha256:1833960b47a78c67cea9d1789f77224f68b0f42423ccfcc194d3d61f581fc91a",
+      "digest": "sha256:188a77de1abfc72ae0a5437c054d069c7404f7d2361d2af956c43ac992e540c4",
       "id": "reportkit-python"
     },
     "sourceIdentifiers": [

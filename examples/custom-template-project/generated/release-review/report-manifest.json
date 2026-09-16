@@ -22,7 +22,7 @@
     "canonicalModelDigest": "sha256:d02de7474de85d003847ac91d5da953ae9bfe1f1e6f379290bd4849ae667d576",
     "configurationDigest": "sha256:471beca41c97106a2e89cf1d59cf05a8783fe5a86b6dc33a48292a93b7240516",
     "renderer": {
-      "digest": "sha256:1833960b47a78c67cea9d1789f77224f68b0f42423ccfcc194d3d61f581fc91a",
+      "digest": "sha256:188a77de1abfc72ae0a5437c054d069c7404f7d2361d2af956c43ac992e540c4",
       "id": "reportkit-python"
     },
     "sourceIdentifiers": [

@@ -110,6 +110,20 @@ class DeclarativeTemplatePackTests(unittest.TestCase):
             self.assertIn("pack-theme-color", codes)
             self.assertIn("json-schema-max-length", codes)
 
+    def test_invalid_capability_shapes_stop_dependent_validation(self) -> None:
+        for field in ("supportedSchemaVersions", "requiredFields", "requiredSections"):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temp:
+                copied = Path(temp) / "pack"
+                shutil.copytree(self.pack, copied)
+                template_path = copied / "template.json"
+                template = load_json(template_path)
+                template[field] = 7
+                template_path.write_text(json.dumps(template), encoding="utf-8")
+                report, validated = validate_pack(copied)
+                self.assertEqual("failed", report["status"])
+                self.assertIsNone(validated)
+                self.assertIn("json-schema-type", {issue["code"] for issue in report["errors"]})
+
     def test_zip_traversal_symlink_and_active_files_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             archive = Path(temp) / "malicious.zip"

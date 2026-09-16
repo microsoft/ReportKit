@@ -10,7 +10,7 @@ import shutil
 import stat
 from collections import Counter, deque
 from datetime import datetime, timezone
-from html import escape
+from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -762,28 +762,61 @@ class SiteParser(HTMLParser):
         self.has_freshness = False
         self.csp_values: list[str] = []
         self.item_counts: list[str] = []
+        self.inline_styles: list[str] = []
+        self.style_attributes: list[str] = []
+        self.resources_before_csp: list[str] = []
+        self._style_chunks: list[str] | None = None
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes = dict(attrs)
-        if attributes.get("id"):
-            identifier = str(attributes["id"])
-            if identifier in self.ids:
-                self.duplicate_ids.add(identifier)
-            self.ids.add(identifier)
-        for attribute in ("href", "src", "action"):
-            if attributes.get(attribute):
-                self.references.append((tag, attribute, str(attributes[attribute])))
-        if tag in {"script", "iframe", "object", "embed", "form", "base"}:
-            self.unsafe_elements.append(tag)
-        for name in attributes:
-            if name.lower().startswith("on"):
-                self.event_handlers.append(name)
         if tag == "meta":
             http_equiv = str(attributes.get("http-equiv", "")).lower()
             if http_equiv == "content-security-policy":
                 self.csp_values.append(str(attributes.get("content", "")))
             if http_equiv == "refresh":
                 self.unsafe_elements.append("meta-refresh")
+        style = attributes.get("style")
+        if style is not None:
+            self.style_attributes.append(str(style))
+        resource_attributes = {
+            "audio": ("src",),
+            "embed": ("src",),
+            "iframe": ("src",),
+            "img": ("src", "srcset"),
+            "input": ("src",),
+            "link": ("href",),
+            "object": ("data",),
+            "source": ("src", "srcset"),
+            "track": ("src",),
+            "video": ("src", "poster"),
+        }
+        affects_resources = (
+            tag == "style"
+            or style is not None
+            or any(attributes.get(name) for name in resource_attributes.get(tag, ()))
+        )
+        if affects_resources and REQUIRED_CSP not in self.csp_values:
+            self.resources_before_csp.append(tag)
+        if tag == "style":
+            self._style_chunks = []
+        if attributes.get("id"):
+            identifier = str(attributes["id"])
+            if identifier in self.ids:
+                self.duplicate_ids.add(identifier)
+            self.ids.add(identifier)
+        for attribute in ("href", "src", "action", "poster", "data", "xlink:href"):
+            if attributes.get(attribute):
+                self.references.append((tag, attribute, str(attributes[attribute])))
+        if attributes.get("srcset"):
+            for candidate in str(attributes["srcset"]).split(","):
+                reference = candidate.strip().split(maxsplit=1)[0]
+                if reference:
+                    self.references.append((tag, "srcset", reference))
+        if tag in {"script", "iframe", "object", "embed", "form", "base"}:
+            self.unsafe_elements.append(tag)
+        for name in attributes:
+            if name.lower().startswith("on"):
+                self.event_handlers.append(name)
         if tag == "body" and attributes.get("data-item-count") is not None:
             self.item_counts.append(str(attributes["data-item-count"]))
         self.has_main |= tag == "main"
@@ -791,6 +824,15 @@ class SiteParser(HTMLParser):
         classes = str(attributes.get("class", "")).split()
         self.has_classification |= "classification" in classes
         self.has_freshness |= "freshness" in classes
+
+    def handle_data(self, data: str) -> None:
+        if self._style_chunks is not None:
+            self._style_chunks.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "style" and self._style_chunks is not None:
+            self.inline_styles.append("".join(self._style_chunks))
+            self._style_chunks = None
 
 
 def _decode_reference_path(value: str) -> str:
@@ -801,6 +843,52 @@ def _decode_reference_path(value: str) -> str:
             break
         decoded = next_value
     return decoded.replace("\\", "/")
+
+
+def _decode_css(value: str) -> str:
+    decoded = value
+    for _ in range(3):
+        next_value = unquote(decoded)
+        if next_value == decoded:
+            break
+        decoded = next_value
+
+    def character(match: re.Match[str]) -> str:
+        codepoint = int(match.group(1), 16)
+        return chr(codepoint) if codepoint <= 0x10FFFF and not 0xD800 <= codepoint <= 0xDFFF else "\uFFFD"
+
+    decoded = re.sub(
+        r"\\([0-9A-Fa-f]{1,6})\s?",
+        character,
+        decoded,
+    )
+    return re.sub(r"\\(.)", r"\1", decoded)
+
+
+def _validate_css(
+    css: str,
+    relative: str,
+    base: Path,
+    site: Path,
+    errors: list[dict[str, str]],
+) -> None:
+    normalized = re.sub(r"/\*.*?\*/", "", _decode_css(unescape(css)), flags=re.DOTALL)
+    if re.search(
+        r"(?i)@import\b|expression\s*\(|javascript\s*:|(?:^|[;{])\s*behavior\s*:",
+        normalized,
+    ):
+        errors.append(message("unsafe-css", "CSS contains an active or importing construct.", relative))
+    for match in re.finditer(r"(?i)url\(\s*(['\"]?)(.*?)\1\s*\)", normalized):
+        reference = match.group(2).strip()
+        if reference.startswith("#"):
+            continue
+        parsed = urlsplit(reference)
+        if parsed.scheme or parsed.netloc or reference.startswith("//"):
+            errors.append(message("external-css-resource", f"CSS resource '{reference}' is not allowed.", relative))
+            continue
+        target = _safe_relative_path(site, base, parsed.path)
+        if target is None or not target.is_file():
+            errors.append(message("unsafe-css-resource", f"CSS resource '{reference}' is unsafe or missing.", relative))
 
 
 def _safe_relative_path(root: Path, base: Path, value: str) -> Path | None:
@@ -832,10 +920,14 @@ def _safe_relative_path(root: Path, base: Path, value: str) -> Path | None:
 
 def _load_json_for_validation(path: Path, errors: list[dict[str, str]]) -> dict[str, Any] | None:
     try:
-        return load_json(path)
+        value = load_json(path)
     except (OSError, ValueError, json.JSONDecodeError) as exception:
         errors.append(message("invalid-json", f"Invalid JSON document: {exception}", path.name))
         return None
+    if not isinstance(value, dict):
+        errors.append(message("json-root-type", "JSON document must contain an object.", path.name))
+        return None
+    return value
 
 
 def lexical_absolute_path(path: Path) -> Path:
@@ -896,6 +988,7 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
         path for path in inventory_files if path.suffix.lower() in {".html", ".htm"}
     )
     parsed_pages: dict[str, tuple[Path, SiteParser]] = {}
+    html_texts: dict[str, str] = {}
     for page in html_files:
         relative = relative_site_path(site, page)
         if page.is_symlink() or (hasattr(os.path, "isjunction") and os.path.isjunction(page)):
@@ -906,9 +999,13 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
         except UnicodeDecodeError:
             errors.append(message("invalid-html-encoding", "HTML must be UTF-8.", relative))
             continue
+        except OSError:
+            errors.append(message("html-read", "HTML could not be read.", relative))
+            continue
         parser = SiteParser()
         parser.feed(html_text)
         parsed_pages[relative] = (page, parser)
+        html_texts[relative] = html_text
         for element in sorted(set(parser.unsafe_elements)):
             errors.append(message("active-content", f"Element '{element}' is not allowed.", relative))
         for handler in sorted(set(parser.event_handlers)):
@@ -923,6 +1020,16 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
             errors.append(message("missing-freshness", "Freshness is not visibly rendered.", relative))
         if REQUIRED_CSP not in parser.csp_values:
             errors.append(message("invalid-csp", "Generated HTML must declare the exact ReportKit content security policy.", relative))
+        if parser.resources_before_csp:
+            errors.append(message(
+                "csp-placement",
+                "The exact ReportKit CSP must appear before styles and resource-loading elements.",
+                relative,
+            ))
+        for css in parser.inline_styles:
+            _validate_css(css, relative, page.parent, site, errors)
+        for css in parser.style_attributes:
+            _validate_css(css, relative, page.parent, site, errors)
 
     for relative, (page, parser) in parsed_pages.items():
         for tag, attribute, reference in parser.references:
@@ -967,31 +1074,29 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
             except UnicodeDecodeError:
                 errors.append(message("invalid-css-encoding", "CSS must be UTF-8.", relative))
                 continue
-            if re.search(r"(?i)@import\b|expression\s*\(|javascript\s*:|behavior\s*:", css):
-                errors.append(message("unsafe-css", "CSS contains an active or importing construct.", relative))
-            for match in re.finditer(r"(?i)url\(\s*(['\"]?)(.*?)\1\s*\)", css):
-                reference = match.group(2).strip()
-                if reference.startswith("#"):
-                    continue
-                parsed = urlsplit(reference)
-                if parsed.scheme or parsed.netloc or reference.startswith("//"):
-                    errors.append(message("external-css-resource", f"CSS resource '{reference}' is not allowed.", relative))
-                    continue
-                target = _safe_relative_path(site, asset.parent, parsed.path)
-                if target is None or not target.is_file():
-                    errors.append(message("unsafe-css-resource", f"CSS resource '{reference}' is unsafe or missing.", relative))
+            except OSError:
+                errors.append(message("css-read", "CSS could not be read.", relative))
+                continue
+            _validate_css(css, relative, asset.parent, site, errors)
         elif asset.suffix.lower() == ".svg":
             try:
                 svg = asset.read_text(encoding="utf-8")
             except UnicodeDecodeError:
                 errors.append(message("invalid-svg-encoding", "SVG must be UTF-8.", relative))
                 continue
+            except OSError:
+                errors.append(message("svg-read", "SVG could not be read.", relative))
+                continue
             if re.search(r"(?i)<\s*(?:script|foreignObject|iframe|object|embed|form)\b", svg):
                 errors.append(message("active-svg", "SVG contains active or embedded content.", relative))
             if re.search(r"(?i)\son[a-z]+\s*=", svg):
                 errors.append(message("svg-event-handler", "SVG contains an inline event handler.", relative))
+            for match in re.finditer(r"(?is)<style\b[^>]*>(.*?)</style\s*>", svg):
+                _validate_css(match.group(1), relative, asset.parent, site, errors)
+            for match in re.finditer(r"(?is)\sstyle\s*=\s*(['\"])(.*?)\1", svg):
+                _validate_css(match.group(2), relative, asset.parent, site, errors)
             for match in re.finditer(r"(?i)(?:href|xlink:href)\s*=\s*['\"]([^'\"]+)['\"]", svg):
-                reference = match.group(1)
+                reference = _decode_reference_path(unescape(match.group(1)))
                 if reference.startswith("#"):
                     continue
                 parsed = urlsplit(reference)
@@ -1041,7 +1146,7 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
             errors.append(message("page-count-mismatch", f"Manifest pageCount is {manifest.get('pageCount')}; found {len(html_files)}.", "report-manifest.json"))
         if expected_item_count is not None and manifest.get("itemCount") != expected_item_count:
             errors.append(message("item-count-mismatch", f"Manifest itemCount is {manifest.get('itemCount')}; expected {expected_item_count}.", "report-manifest.json"))
-        index_text = index.read_text(encoding="utf-8")
+        index_text = html_texts.get("index.html", "")
         index_entry = parsed_pages.get("index.html")
         artifact_counts = index_entry[1].item_counts if index_entry is not None else []
         if len(artifact_counts) != 1 or not artifact_counts[0].isdigit():
@@ -1116,21 +1221,34 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
             else "passed-with-warnings" if isinstance(reported_warnings, list) and reported_warnings
             else "passed"
         )
-        if validation.get("status") not in {"passed", "passed-with-warnings", "failed"}:
+        validation_status = validation.get("status")
+        if not isinstance(validation_status, str) or validation_status not in ("passed", "passed-with-warnings", "failed"):
             errors.append(message("validation-status-invalid", "Validation status is not recognized.", "validation-report.json.status"))
         if isinstance(reported_errors, list) and reported_errors:
             errors.append(message("validation-reported-errors", "A validation report containing errors cannot permit publication.", "validation-report.json.errors"))
-        if validation.get("status") != derived_status:
+        if validation_status != derived_status:
             errors.append(message("validation-status-mismatch", "Validation status does not match its error and warning counts.", "validation-report.json.status"))
         if isinstance(reported_warnings, list):
-            warnings.extend(reported_warnings)
+            warnings.extend(
+                item for item in reported_warnings
+                if isinstance(item, dict)
+                and isinstance(item.get("code"), str)
+                and isinstance(item.get("message"), str)
+                and (item.get("path") is None or isinstance(item.get("path"), str))
+            )
         reported_info = validation.get("info", [])
         if isinstance(reported_info, list):
-            info.extend(reported_info)
+            info.extend(
+                item for item in reported_info
+                if isinstance(item, dict)
+                and isinstance(item.get("code"), str)
+                and isinstance(item.get("message"), str)
+                and (item.get("path") is None or isinstance(item.get("path"), str))
+            )
         if manifest is not None and isinstance(manifest.get("validation"), dict):
             manifest_validation = manifest["validation"]
             pairs = {
-                "status": validation.get("status"),
+                "status": validation_status,
                 "errors": len(validation.get("errors", [])) if isinstance(validation.get("errors"), list) else None,
                 "warnings": len(validation.get("warnings", [])) if isinstance(validation.get("warnings"), list) else None,
                 "info": len(validation.get("info", [])) if isinstance(validation.get("info"), list) else None,
@@ -1138,7 +1256,8 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
             for key, expected in pairs.items():
                 if manifest_validation.get(key) != expected:
                     errors.append(message("manifest-validation-mismatch", f"Manifest validation {key} does not match validation-report.json.", f"report-manifest.json.validation.{key}"))
-            if manifest_validation.get("status") not in {"passed", "passed-with-warnings"}:
+            manifest_status = manifest_validation.get("status")
+            if not isinstance(manifest_status, str) or manifest_status not in ("passed", "passed-with-warnings"):
                 errors.append(message("manifest-validation-status", "Manifest validation status does not permit publication.", "report-manifest.json.validation.status"))
     return validation_report(errors, warnings, info)
 

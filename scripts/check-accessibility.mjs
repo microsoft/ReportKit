@@ -23,6 +23,30 @@ console.log(`Accessibility browser: Chromium ${browser.version()}; platform: ${p
 const failures = [];
 
 try {
+  const adversarialContext = await browser.newContext({ serviceWorkers: "block" });
+  const adversarialRequests = new Set();
+  await adversarialContext.route("**/*", async (route) => {
+    const url = route.request().url();
+    if (!["about:", "data:"].includes(new URL(url).protocol)) {
+      adversarialRequests.add(url);
+      await route.abort("blockedbyclient");
+    } else {
+      await route.continue();
+    }
+  });
+  const adversarialPage = await adversarialContext.newPage();
+  await adversarialPage.setContent(
+    '<style>@import "https://reportkit.invalid/pre-csp.css";</style>' +
+    `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">`,
+  );
+  await adversarialPage.waitForTimeout(100);
+  await adversarialContext.close();
+  if (![...adversarialRequests].some((url) => url.includes("reportkit.invalid/pre-csp.css"))) {
+    failures.push("Adversarial CSP-order fixture did not exercise the browser's pre-CSP request behavior.");
+  } else {
+    console.log("PASS adversarial CSP-order fixture: pre-CSP CSS request observed and blocked by the test harness.");
+  }
+
   for (const example of examples) {
     const context = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
