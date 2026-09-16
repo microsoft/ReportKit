@@ -61,4 +61,6 @@ jobs:
           retention-days: 7
           if-no-files-found: error
       - name: Check generated and visual artifacts are current
-        run: git diff --exit-code -- templates showcase examples/operational-snapshot/generated examples/custom-template-project/generated docs/assets/screenshots
+        run: |
+          git -c safe.directory="$GITHUB_WORKSPACE" rev-parse --show-toplevel
+          git -c safe.directory="$GITHUB_WORKSPACE" diff --exit-code -- templates showcase examples/operational-snapshot/generated examples/custom-template-project/generated docs/assets/screenshots
