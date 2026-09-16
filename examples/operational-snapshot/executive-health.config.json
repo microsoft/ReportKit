@@ -1,0 +1,19 @@
+{
+  "freshnessThresholdsMinutes": {
+    "fresh": 60,
+    "stale": 1440
+  },
+  "output": {
+    "includePrototypeNotice": false,
+    "selfContained": true
+  },
+  "template": {
+    "id": "executive-health",
+    "version": "1.0"
+  },
+  "theme": {
+    "name": "reportkit-default",
+    "primaryColor": "#2875e2"
+  },
+  "version": "1.0"
+}

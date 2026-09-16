@@ -1,0 +1,23 @@
+{
+  "projectVersion": "1.0",
+  "projectId": "release-review-demo",
+  "currentPhase": "build-review",
+  "template": {
+    "id": "contoso/release-review",
+    "version": "1.0.0",
+    "kind": "declarative",
+    "path": "templates/contoso-release-review",
+    "digest": "sha256:7c396ddc6fe3e7fc803e51ba9a4a803aafa86e6b2ddb073668e803f134190e19"
+  },
+  "sources": [
+    {
+      "id": "release-readiness-snapshot",
+      "kind": "canonical-json",
+      "path": "templates/contoso-release-review/examples/canonical-report.json"
+    }
+  ],
+  "canonicalModel": "templates/contoso-release-review/examples/canonical-report.json",
+  "configuration": "templates/contoso-release-review/examples/configuration.json",
+  "previewOutput": "generated/release-review",
+  "lastValidation": "generated/release-review/validation-report.json"
+}

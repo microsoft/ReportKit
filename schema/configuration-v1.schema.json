@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://reportkit.dev/schema/configuration-v1.schema.json",
+  "title": "ReportKit configuration 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "template"],
+  "properties": {
+    "version": { "const": "1.0" },
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "primaryColor": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+      }
+    },
+    "freshnessThresholdsMinutes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fresh": { "type": "integer", "minimum": 0, "maximum": 525600 },
+        "stale": { "type": "integer", "minimum": 0, "maximum": 525600 }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "selfContained": { "type": "boolean" },
+        "includePrototypeNotice": { "type": "boolean" }
+      }
+    }
+  }
+}

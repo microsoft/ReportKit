@@ -1,0 +1,14 @@
+{
+  "contractVersion": "1.0",
+  "id": "operational-health",
+  "version": "1.0",
+  "audience": "Service owners and on-call teams",
+  "primaryDecision": "What regressed and what threatens reliability, recovery, or delivery?",
+  "supportedSchemaVersions": ["1.0"],
+  "requiredSections": ["report", "metrics", "groups"],
+  "requiredFields": ["report.title", "report.generatedAt", "report.dataAsOf", "report.status", "report.classification"],
+  "optionalSections": ["items", "trends", "highlights", "links"],
+  "supportedPageTypes": ["overview", "service-detail", "incident-detail"],
+  "features": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
+  "ordering": ["groups.order,label,id", "items.priority,dueDate,id", "trends.order,id"]
+}

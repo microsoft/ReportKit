@@ -1,0 +1,17 @@
+{
+  "themeVersion": "1.0",
+  "name": "Contoso Light",
+  "tokens": {
+    "primary": "#2457A7",
+    "accent": "#3A8D72",
+    "canvas": "#F3F6F9",
+    "surface": "#FFFFFF",
+    "fontFamily": "system"
+  },
+  "terminology": {
+    "group": "Program",
+    "item": "Decision",
+    "accountableOwner": "Executive owner",
+    "actionOwner": "Delivery owner"
+  }
+}

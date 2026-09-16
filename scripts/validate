@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Validate ReportKit canonical data or a generated site."""
+
+import argparse
+import json
+from pathlib import Path
+
+from reportkit_engine import load_json, validate_model, validate_site
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate canonical ReportKit data or a generated report site.")
+    parser.add_argument("target", type=Path, help="Canonical JSON file or generated site folder.")
+    parser.add_argument("--kind", choices=("auto", "model", "site"), default="auto")
+    parser.add_argument("--template", default="executive-health", help="Template capability used for model validation.")
+    args = parser.parse_args()
+
+    target = args.target.absolute()
+    kind = args.kind
+    if kind == "auto":
+        kind = "site" if target.is_dir() else "model"
+    root = Path(__file__).resolve().parents[1]
+    if kind == "model":
+        capability_path = root / "templates" / args.template / "template.json"
+        if not capability_path.is_file():
+            parser.error(f"unknown template '{args.template}'")
+        errors = []
+        try:
+            model = load_json(target)
+            capability = load_json(capability_path)
+        except (OSError, ValueError, json.JSONDecodeError) as exception:
+            errors.append({
+                "code": "invalid-json",
+                "message": f"Invalid JSON document: {exception}",
+                "path": str(target),
+            })
+        report = (
+            {
+                "reportVersion": "1.0",
+                "status": "failed",
+                "errors": errors,
+                "warnings": [],
+                "info": [],
+                "summary": {"errorCount": len(errors), "warningCount": 0, "infoCount": 0},
+            }
+            if errors
+            else validate_model(model, capability)
+        )
+    else:
+        report = validate_site(target)
+
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 1 if report["errors"] else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

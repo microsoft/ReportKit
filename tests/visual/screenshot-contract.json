@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "defaults": {
+    "colorScheme": "light",
+    "deviceScaleFactor": 1,
+    "reducedMotion": "reduce"
+  },
+  "captures": [
+    { "name": "executive-health-hero.png", "page": "examples/operational-snapshot/generated/executive-health/index.html", "width": 1440, "height": 1000, "fullPage": false },
+    { "name": "action-risk-hero.png", "page": "templates/action-risk/action-risk.html", "width": 1440, "height": 1000, "fullPage": false },
+    { "name": "portfolio-team-hero.png", "page": "templates/portfolio-team/portfolio-team.html", "width": 1440, "height": 1000, "fullPage": false },
+    { "name": "operational-health-hero.png", "page": "templates/operational-health/operational-health.html", "width": 1440, "height": 1000, "fullPage": false },
+    { "name": "compliance-readiness-hero.png", "page": "templates/compliance-readiness/compliance-readiness.html", "width": 1440, "height": 1000, "fullPage": false },
+    { "name": "full/executive-health-full.png", "page": "examples/operational-snapshot/generated/executive-health/index.html", "width": 1440, "height": 1000, "fullPage": true },
+    { "name": "full/action-risk-full.png", "page": "templates/action-risk/action-risk.html", "width": 1440, "height": 1000, "fullPage": true },
+    { "name": "full/portfolio-team-full.png", "page": "templates/portfolio-team/portfolio-team.html", "width": 1440, "height": 1000, "fullPage": true },
+    { "name": "full/operational-health-full.png", "page": "templates/operational-health/operational-health.html", "width": 1440, "height": 1000, "fullPage": true },
+    { "name": "full/compliance-readiness-full.png", "page": "templates/compliance-readiness/compliance-readiness.html", "width": 1440, "height": 1000, "fullPage": true },
+    { "name": "mobile/executive-health-mobile.png", "page": "examples/operational-snapshot/generated/executive-health/index.html", "width": 390, "height": 844, "fullPage": false },
+    { "name": "mobile/action-risk-mobile.png", "page": "templates/action-risk/action-risk.html", "width": 390, "height": 844, "fullPage": false },
+    { "name": "mobile/portfolio-team-mobile.png", "page": "templates/portfolio-team/portfolio-team.html", "width": 390, "height": 844, "fullPage": false },
+    { "name": "mobile/operational-health-mobile.png", "page": "templates/operational-health/operational-health.html", "width": 390, "height": 844, "fullPage": false },
+    { "name": "mobile/compliance-readiness-mobile.png", "page": "templates/compliance-readiness/compliance-readiness.html", "width": 390, "height": 844, "fullPage": false },
+    { "name": "interactions/action-risk-filtered-overdue.png", "page": "templates/action-risk/action-risk-overdue.html", "width": 1440, "height": 1000, "fullPage": false },
+    { "name": "interactions/portfolio-team-detail.png", "page": "templates/portfolio-team/portfolio-team-platform-readiness.html", "width": 1440, "height": 1000, "fullPage": false },
+    { "name": "social-preview.png", "page": "showcase/social-preview.html", "width": 1200, "height": 630, "fullPage": false },
+    { "name": "presentation-title.png", "page": "showcase/presentation-title.html", "width": 1920, "height": 1080, "fullPage": false }
+  ]
+}

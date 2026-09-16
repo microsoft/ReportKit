@@ -1,0 +1,30 @@
+{
+  "classification": "Public sample",
+  "dataAsOf": "2026-09-15T17:55:00Z",
+  "files": [
+    ".reportkit-output.json",
+    "index.html",
+    "report-manifest.json",
+    "validation-report.json"
+  ],
+  "generatedAt": "2026-09-15T18:00:00Z",
+  "itemCount": 2,
+  "manifestVersion": "1.0",
+  "pageCount": 1,
+  "reportId": "release-review-public-sample",
+  "reportKitVersion": "0.1.0",
+  "schemaVersion": "1.0",
+  "template": {
+    "digest": "sha256:7c396ddc6fe3e7fc803e51ba9a4a803aafa86e6b2ddb073668e803f134190e19",
+    "id": "contoso/release-review",
+    "kind": "declarative",
+    "source": "project",
+    "version": "1.0.0"
+  },
+  "validation": {
+    "errors": 0,
+    "info": 0,
+    "status": "passed-with-warnings",
+    "warnings": 1
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "errors": [],
+  "info": [],
+  "reportVersion": "1.0",
+  "status": "passed-with-warnings",
+  "summary": {
+    "errorCount": 0,
+    "infoCount": 0,
+    "warningCount": 1
+  },
+  "warnings": [
+    {
+      "code": "missing-trends",
+      "message": "No trend history is available.",
+      "path": "trends"
+    }
+  ]
+}

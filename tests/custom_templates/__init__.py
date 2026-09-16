@@ -1,0 +1,1 @@
+"""Declarative custom-template tests."""

@@ -1,0 +1,14 @@
+{
+  "contractVersion": "1.0",
+  "id": "compliance-readiness",
+  "version": "1.0",
+  "audience": "Reviewers, compliance owners, and release managers",
+  "primaryDecision": "Are requirements satisfied, what exceptions remain, and can the release proceed?",
+  "supportedSchemaVersions": ["1.0"],
+  "requiredSections": ["report", "metrics", "groups", "items"],
+  "requiredFields": ["report.title", "report.generatedAt", "report.dataAsOf", "report.status", "report.classification"],
+  "optionalSections": ["trends", "highlights", "links"],
+  "supportedPageTypes": ["overview", "requirement-detail", "exception-detail"],
+  "features": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
+  "ordering": ["groups.order,label,id", "items.priority,dueDate,id"]
+}

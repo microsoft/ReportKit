@@ -1,0 +1,19 @@
+{
+  "cases": [
+    {
+      "name": "minimum example passes",
+      "input": "examples/minimum.json",
+      "expected": "passed"
+    },
+    {
+      "name": "canonical example passes",
+      "input": "examples/canonical-report.json",
+      "expected": "passed"
+    },
+    {
+      "name": "missing classification fails",
+      "mutation": "remove report.classification",
+      "expected": "failed"
+    }
+  ]
+}

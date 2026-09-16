@@ -1,0 +1,14 @@
+{
+  "contractVersion": "1.0",
+  "id": "portfolio-team",
+  "version": "1.0",
+  "audience": "Managers and organization leaders",
+  "primaryDecision": "Which groups carry risk and where should management intervene?",
+  "supportedSchemaVersions": ["1.0"],
+  "requiredSections": ["report", "metrics", "groups"],
+  "requiredFields": ["report.title", "report.generatedAt", "report.dataAsOf", "report.classification", "groups[].id", "groups[].label"],
+  "optionalSections": ["items", "trends", "highlights", "links"],
+  "supportedPageTypes": ["overview", "group-detail", "state-reference"],
+  "features": { "multiPage": true, "scriptFree": true, "responsive": true, "printable": true },
+  "ordering": ["groups.order,label,id", "items.priority,dueDate,id"]
+}

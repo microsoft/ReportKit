@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "template": {
+    "id": "contoso/release-review",
+    "version": "1.0.0"
+  },
+  "theme": {
+    "name": "Contoso Light",
+    "primaryColor": "#2457A7"
+  },
+  "freshnessThresholdsMinutes": {
+    "fresh": 60,
+    "stale": 1440
+  },
+  "output": {
+    "selfContained": true,
+    "includePrototypeNotice": false
+  }
+}

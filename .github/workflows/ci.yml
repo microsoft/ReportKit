@@ -1,0 +1,54 @@
+name: ReportKit checks
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -B -m unittest discover -s tests -v
+
+  visual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tests/visual/package-lock.json
+      - run: npm ci
+        working-directory: tests/visual
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests/visual
+      - run: python -B scripts/prepare_marketing_pages.py
+      - run: |
+          python -B scripts/build \
+            --template executive-health \
+            --data examples/operational-snapshot/canonical-report.json \
+            --config examples/operational-snapshot/executive-health.config.json \
+            --output examples/operational-snapshot/generated/executive-health \
+            --overwrite
+      - run: |
+          python -B scripts/build-template \
+            --template examples/custom-template-project/templates/contoso-release-review \
+            --data examples/custom-template-project/templates/contoso-release-review/examples/canonical-report.json \
+            --config examples/custom-template-project/templates/contoso-release-review/examples/configuration.json \
+            --lock examples/custom-template-project/reportkit.lock.json \
+            --output examples/custom-template-project/generated/release-review \
+            --overwrite
+      - run: node scripts/capture-screenshots.mjs
+      - name: Check generated and visual artifacts are current
+        run: git diff --exit-code -- templates showcase examples/operational-snapshot/generated examples/custom-template-project/generated docs/assets/screenshots

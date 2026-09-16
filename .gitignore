@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+node_modules/
+dist/
+build/
+report-site/
+report-site-demo/
+guided-executive-report/
+README-preview.html
+/validation-report.json
+*.log

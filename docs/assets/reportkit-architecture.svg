@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" role="img" aria-labelledby="title desc">
+  <title id="title">ReportKit architecture</title>
+  <desc id="desc">Operational sources flow through adapters into one canonical model, then validation and a selected template produce static HTML and publication artifacts.</desc>
+  <rect width="1600" height="620" fill="#07192e"/>
+  <text x="90" y="95" fill="#66d0ff" font-family="Segoe UI, Arial" font-size="25" font-weight="700" letter-spacing="3">REPORTKIT ARCHITECTURE</text>
+  <text x="90" y="160" fill="#ffffff" font-family="Segoe UI, Arial" font-size="54" font-weight="700">Facts, communication, destination.</text>
+  <g font-family="Segoe UI, Arial" text-anchor="middle">
+    <g transform="translate(70 255)">
+      <rect width="210" height="150" rx="18" fill="#ffffff"/>
+      <text x="105" y="65" fill="#14213a" font-size="27" font-weight="700">Source</text>
+      <text x="105" y="103" fill="#607086" font-size="18">Determines facts</text>
+    </g>
+    <text x="310" y="340" fill="#66d0ff" font-size="40">→</text>
+    <g transform="translate(350 255)">
+      <rect width="210" height="150" rx="18" fill="#ffffff"/>
+      <text x="105" y="65" fill="#14213a" font-size="27" font-weight="700">Adapter</text>
+      <text x="105" y="103" fill="#607086" font-size="18">Maps the source</text>
+    </g>
+    <text x="590" y="340" fill="#66d0ff" font-size="40">→</text>
+    <g transform="translate(630 235)">
+      <rect width="280" height="190" rx="18" fill="#eaf3ff" stroke="#66d0ff" stroke-width="4"/>
+      <text x="140" y="72" fill="#14213a" font-size="27" font-weight="700">Canonical model</text>
+      <text x="140" y="112" fill="#225f9f" font-size="18">One shared set of facts</text>
+      <text x="140" y="147" fill="#225f9f" font-size="18">Explicit report date</text>
+    </g>
+    <text x="940" y="340" fill="#66d0ff" font-size="40">→</text>
+    <g transform="translate(980 255)">
+      <rect width="250" height="150" rx="18" fill="#ffffff"/>
+      <text x="125" y="55" fill="#14213a" font-size="25" font-weight="700">Validator +</text>
+      <text x="125" y="88" fill="#14213a" font-size="25" font-weight="700">Template</text>
+      <text x="125" y="121" fill="#607086" font-size="17">Communicates the facts</text>
+    </g>
+    <text x="1260" y="340" fill="#66d0ff" font-size="40">→</text>
+    <g transform="translate(1300 255)">
+      <rect width="230" height="150" rx="18" fill="#ffffff"/>
+      <text x="115" y="65" fill="#14213a" font-size="27" font-weight="700">Publisher</text>
+      <text x="115" y="103" fill="#607086" font-size="18">Chooses destination</text>
+    </g>
+  </g>
+  <text x="800" y="520" fill="#c5d4e3" font-family="Segoe UI, Arial" font-size="24" text-anchor="middle">Canonical model + template version + configuration + ReportKit version = identical output</text>
+  <text x="800" y="565" fill="#66d0ff" font-family="Segoe UI, Arial" font-size="20" font-weight="700" text-anchor="middle">STATIC HTML · MANIFEST · VALIDATION REPORT</text>
+</svg>

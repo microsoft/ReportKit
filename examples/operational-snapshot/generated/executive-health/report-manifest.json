@@ -1,0 +1,30 @@
+{
+  "classification": "Public sample",
+  "dataAsOf": "2026-09-15T17:55:00Z",
+  "files": [
+    ".reportkit-output.json",
+    "index.html",
+    "report-manifest.json",
+    "validation-report.json"
+  ],
+  "generatedAt": "2026-09-15T18:00:00Z",
+  "itemCount": 401,
+  "manifestVersion": "1.0",
+  "pageCount": 1,
+  "reportId": "operational-portfolio-2026-09-15",
+  "reportKitVersion": "0.1.0",
+  "schemaVersion": "1.0",
+  "template": {
+    "digest": "sha256:17f12f8d949fe0c5bd6970e0328d870749b89bc4da7af03a70e5cd3853a497bc",
+    "id": "executive-health",
+    "kind": "built-in",
+    "source": "repository",
+    "version": "1.0"
+  },
+  "validation": {
+    "errors": 0,
+    "info": 0,
+    "status": "passed",
+    "warnings": 0
+  }
+}

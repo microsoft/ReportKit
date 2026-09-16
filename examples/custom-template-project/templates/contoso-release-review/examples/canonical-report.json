@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "1.0",
+  "report": {
+    "id": "release-review-public-sample",
+    "title": "Autumn release readiness",
+    "subtitle": "Decision brief for release approvers",
+    "generatedAt": "2026-09-15T18:00:00Z",
+    "dataAsOf": "2026-09-15T17:55:00Z",
+    "classification": "Public sample",
+    "status": "warning",
+    "statusLabel": "Conditional proceed",
+    "statusSummary": "Two release decisions require confirmation before the final approval gate.",
+    "period": {
+      "label": "Release window ending 18 Sep 2026",
+      "startDate": "2026-09-08",
+      "endDate": "2026-09-18"
+    }
+  },
+  "metrics": [
+    {
+      "id": "gates-passed",
+      "label": "Gates passed",
+      "value": 14,
+      "unit": "of 16",
+      "status": "warning",
+      "description": "Two gates require approval."
+    },
+    {
+      "id": "evidence-coverage",
+      "label": "Evidence coverage",
+      "value": 94,
+      "unit": "percent",
+      "status": "warning",
+      "description": "Coverage is below the release target."
+    },
+    {
+      "id": "critical-defects",
+      "label": "Critical defects",
+      "value": 0,
+      "unit": "defects",
+      "status": "healthy",
+      "description": "No open critical defects."
+    },
+    {
+      "id": "open-decisions",
+      "label": "Open decisions",
+      "value": 2,
+      "unit": "decisions",
+      "status": "warning",
+      "description": "Approval and rollback capacity remain open."
+    }
+  ],
+  "groups": [
+    {
+      "id": "release-engineering",
+      "label": "Release Engineering",
+      "status": "warning",
+      "summary": "Rollback capacity requires confirmation.",
+      "itemIds": ["release-decision-1"]
+    },
+    {
+      "id": "platform-readiness",
+      "label": "Platform Readiness",
+      "status": "warning",
+      "summary": "Final approval ownership is pending.",
+      "itemIds": ["release-decision-2"]
+    }
+  ],
+  "items": [
+    {
+      "id": "release-decision-1",
+      "title": "Confirm reserved rollback capacity",
+      "summary": "The final rollback scenario needs a reserved validation window.",
+      "status": "blocked",
+      "priority": "critical",
+      "groupIds": ["release-engineering"],
+      "accountableOwner": {
+        "team": "Release Engineering"
+      },
+      "dueDate": "2026-09-16",
+      "nextAction": "Reserve the validation window"
+    },
+    {
+      "id": "release-decision-2",
+      "title": "Name the production approval owner",
+      "summary": "The approval role is not yet confirmed for the final ring.",
+      "status": "warning",
+      "priority": "high",
+      "groupIds": ["platform-readiness"],
+      "accountableOwner": {
+        "team": "Platform Readiness"
+      },
+      "dueDate": "2026-09-17",
+      "nextAction": "Confirm the accountable approver"
+    }
+  ],
+  "highlights": [
+    {
+      "id": "release-signal-1",
+      "type": "win",
+      "title": "Critical defect count reached zero",
+      "summary": "The release candidate has no open critical defects.",
+      "status": "healthy"
+    },
+    {
+      "id": "release-signal-2",
+      "type": "risk",
+      "title": "Rollback evidence remains constrained",
+      "summary": "A reserved validation window is still required.",
+      "status": "warning"
+    }
+  ],
+  "provenance": {
+    "adapter": {
+      "id": "public-release-sample",
+      "version": "1.0"
+    },
+    "sources": [
+      {
+        "name": "Release readiness snapshot",
+        "type": "synthetic"
+      }
+    ],
+    "recordCounts": {
+      "raw": 2
+    }
+  }
+}

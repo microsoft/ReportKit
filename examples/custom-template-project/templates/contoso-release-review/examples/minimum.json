@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "report": {
+    "id": "release-review-minimum",
+    "title": "Minimum release review",
+    "generatedAt": "2026-09-15T18:00:00Z",
+    "dataAsOf": "2026-09-15T17:55:00Z",
+    "classification": "Public sample",
+    "status": "warning"
+  },
+  "metrics": [
+    {
+      "id": "release-gates",
+      "label": "Release gates",
+      "value": 1,
+      "unit": "gate",
+      "status": "warning"
+    }
+  ],
+  "groups": [
+    {
+      "id": "release-program",
+      "label": "Release program",
+      "status": "warning",
+      "itemIds": ["decision-1"]
+    }
+  ],
+  "items": [
+    {
+      "id": "decision-1",
+      "title": "Confirm release approval",
+      "status": "warning",
+      "priority": "high",
+      "groupIds": ["release-program"]
+    }
+  ],
+  "provenance": {
+    "adapter": {
+      "id": "public-sample",
+      "version": "1.0"
+    },
+    "sources": [
+      {
+        "name": "Release snapshot",
+        "type": "synthetic"
+      }
+    ],
+    "recordCounts": {
+      "raw": 1
+    }
+  }
+}

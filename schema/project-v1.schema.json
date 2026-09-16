@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://reportkit.dev/schema/project-v1.schema.json",
+  "title": "ReportKit project state 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["projectVersion", "projectId", "currentPhase", "template", "sources"],
+  "properties": {
+    "projectVersion": { "const": "1.0" },
+    "projectId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "currentPhase": {
+      "enum": ["choose-template", "add-data", "build-review", "publish-destination"]
+    },
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "kind", "path", "digest"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["built-in", "declarative", "trusted-extension"] },
+        "path": { "type": "string", "minLength": 1 },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "path"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["canonical-json", "json", "csv"] },
+          "path": { "type": "string", "minLength": 1 },
+          "mapping": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "canonicalModel": { "type": "string", "minLength": 1 },
+    "configuration": { "type": "string", "minLength": 1 },
+    "previewOutput": { "type": "string", "minLength": 1 },
+    "lastValidation": { "type": "string", "minLength": 1 }
+  }
+}

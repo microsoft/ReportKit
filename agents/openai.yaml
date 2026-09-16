@@ -1,0 +1,5 @@
+interface:
+  display_name: "ReportKit"
+  short_description: "Build validated static reports from operational data"
+  brand_color: "#2875E2"
+  default_prompt: "Use $reportkit to get started with a validated static HTML report."

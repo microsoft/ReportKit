@@ -1,0 +1,34 @@
+{
+  "contractVersion": "1.0",
+  "id": "contoso/release-review",
+  "displayName": "Release Review",
+  "version": "1.0.0",
+  "description": "A decision report for release approvers.",
+  "audience": "Release owners and approvers",
+  "primaryDecision": "Can this release proceed?",
+  "supportedSchemaVersions": ["1.0"],
+  "requiredSections": ["report", "metrics", "groups", "items"],
+  "requiredFields": [
+    "report.title",
+    "report.status",
+    "report.generatedAt",
+    "report.dataAsOf",
+    "report.classification",
+    "metrics[].id",
+    "groups[].id",
+    "groups[].label",
+    "items[].id",
+    "items[].title"
+  ],
+  "optionalSections": ["trends", "highlights", "links"],
+  "supportedPageTypes": ["overview"],
+  "features": {
+    "multiPage": false,
+    "scriptFree": true,
+    "responsive": true,
+    "printable": true
+  },
+  "compatibility": {
+    "minimumReportKitVersion": "0.1.0"
+  }
+}

@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ReportKit Executive Health static report">
+  <meta name="color-scheme" content="light">
+  <title>Engineering Portfolio Health | ReportKit</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b2341'/%3E%3Cpath d='M17 16h18c9 0 14 5 14 13 0 6-3 10-9 12l10 9H38l-8-8h-3v8H17V16Zm10 9v9h8c3 0 5-2 5-5s-2-4-5-4h-8Z' fill='%236fd3ff'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --ink: #14213a;
+      --ink-soft: #53627a;
+      --navy: #07192e;
+      --navy-2: #0d2949;
+      --blue: #2875e2;
+      --blue-soft: #e9f2ff;
+      --cyan: #66d0ff;
+      --green: #16855f;
+      --green-soft: #e5f6ef;
+      --amber: #b65f00;
+      --amber-bright: #f8bc43;
+      --amber-soft: #fff3d8;
+      --red: #c83e4d;
+      --red-soft: #ffeaed;
+      --surface: #ffffff;
+      --canvas: #eef3f8;
+      --line: #d9e2ed;
+      --line-strong: #c3cedc;
+      --shadow: 0 18px 50px rgba(20, 40, 72, 0.09);
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 11px;
+      --page: 1320px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--canvas);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, var(--navy) 0 460px, var(--canvas) 460px 100%);
+      font-family: "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+
+    a:focus-visible {
+      outline: 3px solid var(--cyan);
+      outline-offset: 4px;
+      border-radius: 4px;
+    }
+
+    .skip-link {
+      position: fixed;
+      z-index: 100;
+      top: 12px;
+      left: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--navy);
+      font-weight: 700;
+      transform: translateY(-160%);
+      transition: transform .15s ease;
+    }
+
+    .skip-link:focus { transform: translateY(0); }
+
+    .shell {
+      width: min(calc(100% - 40px), var(--page));
+      margin: 0 auto;
+    }
+
+    .masthead {
+      min-height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 28px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,.13);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 720;
+      letter-spacing: -.01em;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 11px;
+      background: linear-gradient(145deg, rgba(102,208,255,.24), rgba(40,117,226,.12));
+      color: var(--cyan);
+      font-weight: 850;
+      font-size: 19px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+    }
+
+    .brand-version {
+      color: #93a7bf;
+      font-size: .79rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .top-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .top-nav a {
+      color: #c5d3e3;
+      font-size: .88rem;
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    .top-nav a:hover { color: #fff; }
+
+    .classification {
+      padding: 7px 11px;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: #e4edf7;
+      font-size: .76rem;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .preview-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 38px;
+      color: #bed1e5;
+      background: rgba(255,255,255,.035);
+      font-size: .82rem;
+      letter-spacing: .01em;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .preview-note strong { color: #fff; }
+
+    .preview-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 0 4px rgba(102,208,255,.12);
+    }
+
+    .report-intro {
+      position: relative;
+      padding: 48px 0 56px;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    .report-intro::after {
+      content: "";
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      right: -180px;
+      top: -220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(40,117,226,.30), rgba(40,117,226,0) 68%);
+      pointer-events: none;
+    }
+
+    .intro-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(310px, .7fr);
+      gap: 72px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--cyan);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 820px;
+      margin: 0;
+      font-size: clamp(2.25rem, 4vw, 4.6rem);
+      line-height: .98;
+      letter-spacing: -.052em;
+      font-weight: 760;
+    }
+
+    .subtitle {
+      margin: 20px 0 0;
+      color: #b8c9dc;
+      font-size: 1.02rem;
+    }
+
+    .status-panel {
+      position: relative;
+      padding: 22px 24px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+      box-shadow: 0 20px 50px rgba(0,0,0,.14);
+      backdrop-filter: blur(8px);
+    }
+
+    .status-kicker {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 8px;
+      color: #c2d2e2;
+      font-size: .79rem;
+      font-weight: 700;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .status-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: var(--amber-bright);
+      color: #4a2b00;
+      font-weight: 900;
+      font-size: .8rem;
+    }
+
+    .status-title {
+      margin: 0;
+      font-size: 1.65rem;
+      line-height: 1.16;
+      letter-spacing: -.025em;
+    }
+
+    .status-copy {
+      margin: 10px 0 0;
+      color: #c8d5e3;
+      font-size: .92rem;
+      line-height: 1.55;
+    }
+
+    .status-copy strong { color: #fff; }
+
+    main { padding-bottom: 44px; }
+
+    .metrics {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: -22px;
+    }
+
+    .metric {
+      position: relative;
+      min-height: 188px;
+      padding: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(205,217,230,.9);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .metric::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--metric-color, var(--blue));
+    }
+
+    .metric-label {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: .83rem;
+      font-weight: 730;
+      letter-spacing: .02em;
+    }
+
+    .metric-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .metric-value {
+      font-size: 2.55rem;
+      line-height: 1;
+      font-weight: 760;
+      letter-spacing: -.045em;
+    }
+
+    .metric-unit {
+      color: #728099;
+      font-size: .74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .055em;
+    }
+
+    .delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 13px;
+      padding: 5px 8px;
+      border-radius: 7px;
+      font-size: .77rem;
+      font-weight: 750;
+    }
+
+    .delta.good { background: var(--green-soft); color: var(--green); }
+    .delta.bad { background: var(--red-soft); color: var(--red); }
+    .delta.neutral { background: #edf1f6; color: #596981; }
+
+    .metric-context {
+      margin: 11px 0 0;
+      color: #6b7890;
+      font-size: .78rem;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(320px, .85fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      box-shadow: 0 10px 32px rgba(25,47,79,.055);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 24px 26px 0;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1.15rem;
+      line-height: 1.3;
+      letter-spacing: -.018em;
+    }
+
+    .section-desc {
+      margin: 5px 0 0;
+      color: var(--ink-soft);
+      font-size: .84rem;
+    }
+
+    .period-chip {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #526177;
+      background: #f8fafc;
+      font-size: .76rem;
+      font-weight: 700;
+    }
+
+    .trend-body { padding: 16px 26px 24px; }
+
+    .chart-wrap {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr);
+      gap: 12px;
+      min-height: 225px;
+    }
+
+    .y-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 6px 0 28px;
+      color: #8a96a7;
+      font-size: .7rem;
+      text-align: right;
+    }
+
+    .chart {
+      width: 100%;
+      min-height: 220px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 4px;
+      padding-left: 64px;
+      color: #5c6b80;
+      font-size: .78rem;
+      font-weight: 650;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .legend-line {
+      width: 20px;
+      height: 3px;
+      border-radius: 3px;
+      background: var(--legend);
+    }
+
+    .signal-list {
+      display: grid;
+      gap: 0;
+      padding: 12px 24px 18px;
+      margin: 0;
+      list-style: none;
+    }
+
+    .signal {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 13px;
+      padding: 16px 0;
+      border-bottom: 1px solid #e8edf3;
+    }
+
+    .signal:last-child { border-bottom: 0; }
+
+    .signal-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: .93rem;
+      font-weight: 850;
+    }
+
+    .signal-title {
+      margin: 0;
+      font-size: .9rem;
+      line-height: 1.35;
+      font-weight: 740;
+    }
+
+    .signal-copy {
+      margin: 4px 0 0;
+      color: var(--ink-soft);
+      font-size: .79rem;
+      line-height: 1.45;
+    }
+
+    .attention {
+      margin-top: 18px;
+      overflow: hidden;
+    }
+
+    .attention .card-head { padding-bottom: 18px; }
+
+    .attention-summary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--red);
+      font-size: .8rem;
+      font-weight: 760;
+    }
+
+    .attention-summary::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-top: 1px solid var(--line);
+    }
+
+    th, td {
+      padding: 17px 18px;
+      border-bottom: 1px solid #e6ebf1;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: #637187;
+      background: #f8fafc;
+      font-size: .73rem;
+      font-weight: 780;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+    }
+
+    td { font-size: .86rem; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fbfcfe; }
+
+    .risk-name {
+      display: block;
+      color: var(--ink);
+      font-weight: 730;
+    }
+
+    .risk-detail {
+      display: block;
+      margin-top: 3px;
+      color: #6d7b90;
+      font-size: .76rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: .71rem;
+      font-weight: 790;
+      letter-spacing: .035em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .badge.critical { background: var(--red-soft); color: #b92e3f; }
+    .badge.high { background: var(--amber-soft); color: #9b5200; }
+    .badge.watch { background: var(--blue-soft); color: #1e63bc; }
+
+    .decision {
+      display: inline-block;
+      color: #1768cb;
+      font-weight: 700;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    .lower-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .concentration-body {
+      padding: 22px 26px 25px;
+    }
+
+    .program-list {
+      display: grid;
+      gap: 16px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .program-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 7px;
+      font-size: .83rem;
+    }
+
+    .program-name { font-weight: 710; }
+    .program-value { color: #66758a; font-variant-numeric: tabular-nums; }
+
+    .bar-track {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #edf1f5;
+    }
+
+    .bar-fill {
+      display: block;
+      width: var(--width);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--fill), color-mix(in srgb, var(--fill) 68%, white));
+    }
+
+    .outlook-body {
+      padding: 12px 24px 22px;
+    }
+
+    .outlook-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .outlook-item {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 14px;
+      padding: 15px 0;
+      border-bottom: 1px solid #e7edf3;
+    }
+
+    .outlook-item:last-child { border-bottom: 0; }
+
+    .date-tile {
+      align-self: start;
+      padding: 7px 5px;
+      border-radius: 10px;
+      background: #edf4fc;
+      color: #1e5b9e;
+      text-align: center;
+    }
+
+    .date-day {
+      display: block;
+      font-size: 1.15rem;
+      line-height: 1.05;
+      font-weight: 800;
+    }
+
+    .date-mon {
+      display: block;
+      margin-top: 3px;
+      font-size: .66rem;
+      font-weight: 770;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .outlook-title {
+      margin: 0;
+      font-size: .88rem;
+      font-weight: 730;
+    }
+
+    .outlook-copy {
+      margin: 4px 0 0;
+      color: var(--ink-soft);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+
+    .confidence {
+      display: inline-flex;
+      margin-top: 8px;
+      color: #67758a;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    .report-footer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+      margin-top: 18px;
+      padding: 22px 2px 6px;
+      color: #66758a;
+      font-size: .77rem;
+    }
+
+    .footer-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+    }
+
+    .footer-meta span strong { color: #425168; }
+
+    .freshness {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      font-weight: 750;
+    }
+
+    .freshness::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 4px rgba(22,133,95,.11);
+    }
+
+    .muted { color: var(--ink-soft); }
+
+    @media (max-width: 1040px) {
+      .intro-grid { grid-template-columns: 1fr; gap: 30px; }
+      .status-panel { max-width: 640px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .section-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 780px) {
+      body { background: linear-gradient(180deg, var(--navy) 0 660px, var(--canvas) 660px 100%); }
+      .shell { width: min(calc(100% - 28px), var(--page)); }
+      .masthead { min-height: 78px; }
+      .top-nav a:not(.classification) { display: none; }
+      .brand-version { display: none; }
+      .report-intro { padding: 36px 0 48px; }
+      .metrics { margin-top: -16px; }
+      .lower-grid { grid-template-columns: 1fr; }
+      .card-head { padding: 21px 20px 0; }
+      .trend-body, .concentration-body { padding-left: 20px; padding-right: 20px; }
+      .chart-wrap { grid-template-columns: 36px minmax(0, 1fr); }
+      .legend { padding-left: 48px; }
+      .report-footer { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .preview-note { padding: 7px 14px; text-align: center; }
+      h1 { font-size: 2.55rem; }
+      .subtitle { font-size: .92rem; }
+      .metrics { grid-template-columns: 1fr; }
+      .metric { min-height: 154px; }
+      .metric-context { max-width: 42ch; }
+      .period-chip { display: none; }
+      .attention .card-head { padding-bottom: 14px; }
+      table, tbody, tr, td { display: block; width: 100%; }
+      thead { display: none; }
+      tbody tr { padding: 16px 20px; border-top: 1px solid var(--line); }
+      td { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 12px; padding: 8px 0; border: 0; }
+      td::before { content: attr(data-label); color: #718096; font-size: .7rem; font-weight: 760; letter-spacing: .045em; text-transform: uppercase; }
+      td:first-child { display: block; padding-top: 0; }
+      td:first-child::before { display: none; }
+      .chart-wrap { grid-template-columns: 30px minmax(0, 1fr); min-height: 190px; }
+      .chart { min-height: 184px; }
+      .legend { padding-left: 0; gap: 11px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
+    }
+
+    @media print {
+      @page { size: A4 landscape; margin: 12mm; }
+      body { background: #fff; color: #111827; font-size: 11pt; }
+      .shell { width: 100%; }
+      .masthead { min-height: 58px; color: #111827; border-bottom-color: #ccd5df; }
+      .brand-mark { border-color: #afbdcc; background: #edf4fb; }
+      .brand-version, .top-nav a { color: #4b5563; }
+      .classification { color: #111827; border-color: #97a5b6; background: #fff; }
+      .preview-note { color: #4b5563; background: #f4f6f8; border-color: #d4dbe4; }
+      .preview-note strong { color: #111827; }
+      .report-intro { padding: 26px 0 34px; color: #111827; }
+      .report-intro::after { display: none; }
+      .eyebrow { color: #1a5c9b; }
+      .subtitle, .status-copy, .status-kicker { color: #4b5563; }
+      .status-copy strong { color: #111827; }
+      .status-panel { border-color: #c8d2dd; background: #fff; box-shadow: none; }
+      .metric, .card { box-shadow: none; break-inside: avoid; }
+      .attention { break-before: page; }
+      .top-nav a:not(.classification) { display: none; }
+    }
+  .status-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 16px;margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,.14);color:#c8d5e3;font-size:.72rem}.status-meta strong{display:block;color:#fff}.status-meta .fresh{color:#8fe0bd}</style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to report</a>
+
+  <header>
+    <div class="shell masthead">
+      <div class="brand" aria-label="ReportKit">
+        <span class="brand-mark" aria-hidden="true">R</span>
+        <span>ReportKit</span>
+        <span class="brand-version">Executive Health · v1.0</span>
+      </div>
+      <nav class="top-nav" aria-label="Report sections">
+        <a href="#signals">Signals</a>
+        <a href="#attention">Attention</a>
+        <a href="#outlook">Outlook</a>
+        <span class="classification" aria-label="Classification Public sample">Public sample</span>
+      </nav>
+    </div>
+<section class="report-intro" aria-labelledby="report-title">
+      <div class="shell intro-grid">
+        <div>
+          <p class="eyebrow">Weekly leadership brief</p>
+          <h1 id="report-title">Engineering Portfolio Health</h1>
+          <p class="subtitle">Week ending 15 September 2026 · Eight programs in scope</p>
+        </div>
+        <div class="status-panel" aria-label="Overall status requires attention">
+          <p class="status-kicker"><span class="status-icon" aria-hidden="true">!</span> Overall status</p>
+          <h2 class="status-title">Requires attention</h2>
+          <p class="status-copy"><strong>87.8% of records are healthy.</strong> Twelve critical decisions across three programs need leadership support this week.</p><div class="status-meta"><span>Report period<strong>Week ending 15 Sep 2026</strong></span><span class="fresh">Freshness<strong>Fresh · 5 min old</strong></span><span>Data as of<strong>15 Sep · 17:55 UTC</strong></span><span>Generated<strong>15 Sep · 18:00 UTC</strong></span></div>
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <main id="main-content" class="shell">
+    <section class="metrics" aria-label="Key performance indicators">
+      <article class="metric" style="--metric-color:#2875e2">
+        <p class="metric-label">Portfolio coverage</p>
+        <div class="metric-row">
+          <span class="metric-value">401</span>
+          <span class="metric-unit">raw records</span>
+        </div>
+        <span class="delta neutral" aria-label="18 more records since last snapshot">↑ 18 this week</span>
+        <p class="metric-context">Complete coverage across all eight programs.</p>
+      </article>
+
+      <article class="metric" style="--metric-color:#16855f">
+        <p class="metric-label">Healthy</p>
+        <div class="metric-row">
+          <span class="metric-value">352</span>
+          <span class="metric-unit">records · 87.8%</span>
+        </div>
+        <span class="delta good" aria-label="Improved by 4.1 percentage points">↑ 4.1 pts</span>
+        <p class="metric-context">Twenty-one items returned to healthy this week.</p>
+      </article>
+
+      <article class="metric" style="--metric-color:#d28112">
+        <p class="metric-label">Needs attention</p>
+        <div class="metric-row">
+          <span class="metric-value">37</span>
+          <span class="metric-unit">records · 9.2%</span>
+        </div>
+        <span class="delta good" aria-label="Six fewer records need attention">↓ 6 this week</span>
+        <p class="metric-context">Concentrated in readiness and validation work.</p>
+      </article>
+
+      <article class="metric" style="--metric-color:#c83e4d">
+        <p class="metric-label">Critical decisions</p>
+        <div class="metric-row">
+          <span class="metric-value">12</span>
+          <span class="metric-unit">grouped decisions</span>
+        </div>
+        <span class="delta bad" aria-label="Two more critical decisions">↑ 2 this week</span>
+        <p class="metric-context">Seven have a decision date within five days.</p>
+      </article>
+    </section>
+
+    <section id="signals" class="section-grid" aria-label="Portfolio signals">
+      <article class="card" aria-labelledby="trend-heading">
+        <div class="card-head">
+          <div>
+            <h2 class="section-title" id="trend-heading">Health trend</h2>
+            <p class="section-desc">Share of assessed records by weekly snapshot</p>
+          </div>
+          <span class="period-chip">8 weeks</span>
+        </div>
+        <div class="trend-body">
+          <div class="chart-wrap">
+            <div class="y-axis" aria-hidden="true"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+            <svg class="chart" viewBox="0 0 760 230" role="img" aria-labelledby="trend-chart-title trend-chart-desc" preserveAspectRatio="none">
+              <title id="trend-chart-title">Eight-week health trend</title>
+              <desc id="trend-chart-desc">Healthy records improved from 78 percent to 87.8 percent. Records needing attention declined from 16 percent to 9.2 percent. Critical records declined from 6 percent to 3 percent, with a small rise in the latest week.</desc>
+              <defs>
+                <linearGradient id="healthy-area" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#16855f" stop-opacity=".24"/>
+                  <stop offset="1" stop-color="#16855f" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <g stroke="#e6ecf2" stroke-width="1">
+                <line x1="0" y1="8" x2="760" y2="8"/><line x1="0" y1="54" x2="760" y2="54"/>
+                <line x1="0" y1="100" x2="760" y2="100"/><line x1="0" y1="146" x2="760" y2="146"/>
+                <line x1="0" y1="192" x2="760" y2="192"/>
+              </g>
+              <path d="M0 49 L108 45 L217 42 L325 38 L434 35 L542 31 L651 29 L760 25 L760 192 L0 192 Z" fill="url(#healthy-area)"/>
+              <polyline points="0,49 108,45 217,42 325,38 434,35 542,31 651,29 760,25" fill="none" stroke="#16855f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,162 108,164 217,166 325,168 434,169 542,172 651,176 760,175" fill="none" stroke="#d28112" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 7"/>
+              <polyline points="0,181 108,181 217,182 325,184 434,185 542,185 651,187 760,186" fill="none" stroke="#c83e4d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <g fill="#16855f"><circle cx="0" cy="49" r="4"/><circle cx="108" cy="45" r="4"/><circle cx="217" cy="42" r="4"/><circle cx="325" cy="38" r="4"/><circle cx="434" cy="35" r="4"/><circle cx="542" cy="31" r="4"/><circle cx="651" cy="29" r="4"/><circle cx="760" cy="25" r="5"/></g>
+              <g fill="#7b8798" font-size="11" font-family="Segoe UI, Arial, sans-serif" text-anchor="middle">
+                <text x="0" y="218">Jul 28</text><text x="108" y="218">Aug 04</text><text x="217" y="218">Aug 11</text><text x="325" y="218">Aug 18</text><text x="434" y="218">Aug 25</text><text x="542" y="218">Sep 01</text><text x="651" y="218">Sep 08</text><text x="750" y="218">Sep 15</text>
+              </g>
+            </svg>
+          </div>
+          <div class="legend" aria-hidden="true">
+            <span><i class="legend-line" style="--legend:#16855f"></i>Healthy</span>
+            <span><i class="legend-line" style="--legend:#d28112"></i>Needs attention</span>
+            <span><i class="legend-line" style="--legend:#c83e4d"></i>Critical</span>
+          </div>
+        </div>
+      </article>
+
+      <aside class="card" aria-labelledby="highlights-heading">
+        <div class="card-head">
+          <div>
+            <h2 class="section-title" id="highlights-heading">This week’s signals</h2>
+            <p class="section-desc">Confirmed movement since the prior snapshot</p>
+          </div>
+        </div>
+        <ul class="signal-list">
+          <li class="signal">
+            <span class="signal-icon" aria-hidden="true">✓</span>
+            <div><p class="signal-title">21 items returned to healthy</p><p class="signal-copy">Validation evidence closed the largest group of aging actions.</p></div>
+          </li>
+          <li class="signal">
+            <span class="signal-icon" aria-hidden="true">✓</span>
+            <div><p class="signal-title">Two release gates cleared</p><p class="signal-copy">Both programs remain on track for their planned milestones.</p></div>
+          </li>
+          <li class="signal">
+            <span class="signal-icon" aria-hidden="true">✓</span>
+            <div><p class="signal-title">Coverage reached 100%</p><p class="signal-copy">All eight programs supplied a fresh, valid snapshot.</p></div>
+          </li>
+        </ul>
+      </aside>
+    </section>
+
+    <section id="attention" class="card attention" aria-labelledby="attention-heading">
+      <div class="card-head">
+        <div>
+          <h2 class="section-title" id="attention-heading">Leadership attention</h2>
+          <p class="section-desc">Highest-impact decisions, ordered by urgency and due date</p>
+        </div>
+        <span class="attention-summary">3 decisions shown</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th scope="col">Decision / risk</th><th scope="col">Priority</th><th scope="col">Accountable owner</th><th scope="col">Decision by</th><th scope="col">Leadership action</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-label="Decision / risk"><span class="risk-name">Release validation capacity</span><span class="risk-detail">A shared test dependency is constraining two release paths.</span></td>
+            <td data-label="Priority"><span class="badge critical">Critical</span></td>
+            <td data-label="Accountable owner">Platform Foundations</td>
+            <td data-label="Decision by"><strong>18 Sep</strong><span class="risk-detail">3 days</span></td>
+            <td data-label="Leadership action"><a class="decision" href="#decision-capacity">Approve focused validation sprint</a></td>
+          </tr>
+          <tr>
+            <td data-label="Decision / risk"><span class="risk-name">Certificate rotation readiness</span><span class="risk-detail">One production path has incomplete rejection-and-remint evidence.</span></td>
+            <td data-label="Priority"><span class="badge high">High</span></td>
+            <td data-label="Accountable owner">Workload Identity</td>
+            <td data-label="Decision by"><strong>20 Sep</strong><span class="risk-detail">5 days</span></td>
+            <td data-label="Leadership action"><a class="decision" href="#decision-owner">Confirm cross-team owner</a></td>
+          </tr>
+          <tr>
+            <td data-label="Decision / risk"><span class="risk-name">Regional readiness evidence</span><span class="risk-detail">Required validation is complete in three of five environments.</span></td>
+            <td data-label="Priority"><span class="badge watch">Watch</span></td>
+            <td data-label="Accountable owner">Cloud Readiness</td>
+            <td data-label="Decision by"><strong>24 Sep</strong><span class="risk-detail">9 days</span></td>
+            <td data-label="Leadership action"><a class="decision" href="#decision-sequence">Align remaining test sequence</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="outlook" class="lower-grid" aria-label="Risk concentration and outlook">
+      <article class="card" aria-labelledby="concentration-heading">
+        <div class="card-head">
+          <div>
+            <h2 class="section-title" id="concentration-heading">Where attention is concentrated</h2>
+            <p class="section-desc">Open attention and critical records by program</p>
+          </div>
+          <span class="period-chip">49 records</span>
+        </div>
+        <div class="concentration-body">
+          <ul class="program-list">
+            <li><div class="program-top"><span class="program-name">Platform readiness</span><span class="program-value">17 · 35%</span></div><div class="bar-track"><span class="bar-fill" style="--width:100%;--fill:#c83e4d"></span></div></li>
+            <li><div class="program-top"><span class="program-name">Release engineering</span><span class="program-value">13 · 27%</span></div><div class="bar-track"><span class="bar-fill" style="--width:76%;--fill:#df8417"></span></div></li>
+            <li><div class="program-top"><span class="program-name">Service integration</span><span class="program-value">9 · 18%</span></div><div class="bar-track"><span class="bar-fill" style="--width:53%;--fill:#e5a746"></span></div></li>
+            <li><div class="program-top"><span class="program-name">Regional validation</span><span class="program-value">6 · 12%</span></div><div class="bar-track"><span class="bar-fill" style="--width:35%;--fill:#4b8bd9"></span></div></li>
+            <li><div class="program-top"><span class="program-name">Other programs</span><span class="program-value">4 · 8%</span></div><div class="bar-track"><span class="bar-fill" style="--width:24%;--fill:#8a9aaf"></span></div></li>
+          </ul>
+        </div>
+      </article>
+
+      <aside class="card" aria-labelledby="outlook-heading">
+        <div class="card-head">
+          <div>
+            <h2 class="section-title" id="outlook-heading">Forward outlook</h2>
+            <p class="section-desc">Most consequential milestones in the next 10 days</p>
+          </div>
+        </div>
+        <div class="outlook-body">
+          <ol class="outlook-list">
+            <li class="outlook-item" id="decision-capacity">
+              <time class="date-tile" datetime="2026-09-18"><span class="date-day">18</span><span class="date-mon">Sep</span></time>
+              <div><p class="outlook-title">Validation capacity decision</p><p class="outlook-copy">Leadership alignment removes the primary release constraint.</p><span class="confidence">Confidence: medium</span></div>
+            </li>
+            <li class="outlook-item" id="decision-owner">
+              <time class="date-tile" datetime="2026-09-20"><span class="date-day">20</span><span class="date-mon">Sep</span></time>
+              <div><p class="outlook-title">Rotation owner confirmed</p><p class="outlook-copy">A single accountable owner is needed before final evidence review.</p><span class="confidence">Confidence: high</span></div>
+            </li>
+            <li class="outlook-item" id="decision-sequence">
+              <time class="date-tile" datetime="2026-09-24"><span class="date-day">24</span><span class="date-mon">Sep</span></time>
+              <div><p class="outlook-title">Regional validation closes</p><p class="outlook-copy">Remaining environments complete their planned test sequence.</p><span class="confidence">Confidence: medium</span></div>
+            </li>
+          </ol>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="report-footer">
+      <div class="footer-meta">
+        <span><strong>Data as of</strong> 15 Sep 2026, 17:55 UTC</span>
+        <span><strong>Generated</strong> 15 Sep 2026, 18:00 UTC</span>
+        <span><strong>Adapter</strong> sample-unified@1.0</span>
+        <span><strong>Schema</strong> 1.0</span>
+      </div>
+      <span class="freshness">Fresh · 5 minutes old</span>
+    </footer>
+  </main>
+</body>
+</html>

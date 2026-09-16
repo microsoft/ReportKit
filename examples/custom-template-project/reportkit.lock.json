@@ -1,0 +1,13 @@
+{
+  "lockVersion": "1.0",
+  "templates": [
+    {
+      "id": "contoso/release-review",
+      "version": "1.0.0",
+      "kind": "declarative",
+      "source": "project",
+      "path": "templates/contoso-release-review",
+      "digest": "sha256:7c396ddc6fe3e7fc803e51ba9a4a803aafa86e6b2ddb073668e803f134190e19"
+    }
+  ]
+}

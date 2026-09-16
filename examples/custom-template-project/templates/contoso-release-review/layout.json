@@ -1,0 +1,38 @@
+{
+  "layoutVersion": "1.0",
+  "pages": [
+    {
+      "id": "overview",
+      "path": "index.html",
+      "sections": [
+        {
+          "component": "report-masthead"
+        },
+        {
+          "component": "overall-status"
+        },
+        {
+          "component": "metric-grid",
+          "source": "metrics",
+          "variant": "four-up"
+        },
+        {
+          "component": "signal-list",
+          "source": "highlights"
+        },
+        {
+          "component": "attention-table",
+          "source": "items",
+          "selection": "leadership-attention"
+        },
+        {
+          "component": "group-card-grid",
+          "source": "groups"
+        },
+        {
+          "component": "report-footer"
+        }
+      ]
+    }
+  ]
+}

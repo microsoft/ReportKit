@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""Build a deterministic site from a declarative ReportKit template pack."""
+
+import argparse
+from pathlib import Path
+
+from reportkit_engine import lexical_absolute_path
+from template_pack import build_pack_site
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Build a ReportKit declarative template pack.")
+    parser.add_argument("--template", required=True, type=Path, help="Local template-pack folder.")
+    parser.add_argument("--data", required=True, type=Path, help="Canonical ReportKit JSON document.")
+    parser.add_argument("--config", required=True, type=Path, help="Rendering configuration.")
+    parser.add_argument("--output", required=True, type=Path, help="Output directory.")
+    parser.add_argument("--lock", required=True, type=Path, help="Project reportkit.lock.json to enforce.")
+    parser.add_argument("--overwrite", action="store_true", help="Replace an existing ReportKit-owned output.")
+    args = parser.parse_args()
+    report = build_pack_site(
+        args.template.resolve(),
+        args.data.resolve(),
+        args.config.resolve(),
+        lexical_absolute_path(args.output),
+        args.lock.resolve(),
+        overwrite=args.overwrite,
+    )
+    print(f"Validation: {report['status']}")
+    print(
+        f"Errors: {report['summary']['errorCount']}  "
+        f"Warnings: {report['summary']['warningCount']}  "
+        f"Info: {report['summary']['infoCount']}"
+    )
+    for issue in report["errors"] + report["warnings"]:
+        print(f"{issue['code']}: {issue['message']}")
+    return 1 if report["errors"] else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://reportkit.dev/schema/validation-report-v1.schema.json",
+  "title": "ReportKit validation report 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reportVersion", "status", "errors", "warnings", "info", "summary"],
+  "properties": {
+    "reportVersion": { "const": "1.0" },
+    "status": { "enum": ["passed", "passed-with-warnings", "failed"] },
+    "errors": { "type": "array", "items": { "$ref": "#/$defs/message" } },
+    "warnings": { "type": "array", "items": { "$ref": "#/$defs/message" } },
+    "info": { "type": "array", "items": { "$ref": "#/$defs/message" } },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["errorCount", "warningCount", "infoCount"],
+      "properties": {
+        "errorCount": { "type": "integer", "minimum": 0 },
+        "warningCount": { "type": "integer", "minimum": 0 },
+        "infoCount": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "path": { "type": "string" }
+      }
+    }
+  }
+}
