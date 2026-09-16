@@ -28,6 +28,16 @@ def _safe_component(name: str) -> bool:
     )
 
 
+def relative_site_path(site: Path, path: Path) -> str:
+    """Return a stable POSIX relative path across Windows path aliases."""
+    root = os.path.normcase(os.path.realpath(site))
+    candidate = os.path.normcase(os.path.realpath(path))
+    relative = Path(os.path.relpath(candidate, root))
+    if relative == Path(".") or ".." in relative.parts:
+        raise ValueError("Path is not a file below the site root.")
+    return relative.as_posix()
+
+
 def inspect_site_inventory(site: Path) -> tuple[list[Path], list[dict[str, str]]]:
     """List regular files and errors without opening file contents or following links.
 
@@ -83,6 +93,6 @@ def inspect_site_inventory(site: Path) -> tuple[list[Path], list[dict[str, str]]
             if path.suffix.lower() not in ALLOWED_SITE_SUFFIXES:
                 error("site-file-type", "File extension is not allowed in a generated static site.", relative)
 
-    files.sort(key=lambda path: path.relative_to(site).as_posix())
+    files.sort(key=lambda path: relative_site_path(site, path))
     errors.sort(key=lambda issue: (issue["path"], issue["code"], issue["message"]))
     return files, errors

@@ -166,7 +166,8 @@ class DistributionHygieneTests(unittest.TestCase):
         for action in uses:
             self.assertRegex(action, r"^[\w.-]+/[\w.-]+@[0-9a-f]{40}$")
         self.assertIn("scripts/build-examples --overwrite", workflow)
-        self.assertIn("diff --exit-code", workflow)
+        self.assertIn("scripts/check-generated-clean.py", workflow)
+        self.assertNotIn("git diff --exit-code", workflow)
 
 
 if __name__ == "__main__":

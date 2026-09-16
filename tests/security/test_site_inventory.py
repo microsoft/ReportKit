@@ -24,7 +24,7 @@ from site_inventory import inspect_site_inventory  # noqa: E402
 
 class SiteInventoryTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.workspace = ROOT / f".inventory-test-{uuid.uuid4().hex}"
+        self.workspace = ROOT / f".i-{uuid.uuid4().hex[:12]}"
         self.workspace.mkdir()
         self.addCleanup(shutil.rmtree, self.workspace)
         self.site = self.workspace / "site"

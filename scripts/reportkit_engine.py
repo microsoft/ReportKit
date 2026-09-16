@@ -867,7 +867,7 @@ def _first_reparse_component(path: Path) -> Path | None:
 
 def validate_site(site: Path, expected_item_count: int | None = None) -> dict[str, Any]:
     from artifact_identity import verify_identity
-    from site_inventory import inspect_site_inventory
+    from site_inventory import inspect_site_inventory, relative_site_path
 
     errors: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
@@ -895,9 +895,9 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
     html_files = sorted(
         path for path in inventory_files if path.suffix.lower() in {".html", ".htm"}
     )
-    parsed_pages: dict[Path, SiteParser] = {}
+    parsed_pages: dict[str, tuple[Path, SiteParser]] = {}
     for page in html_files:
-        relative = page.relative_to(site).as_posix()
+        relative = relative_site_path(site, page)
         if page.is_symlink() or (hasattr(os.path, "isjunction") and os.path.isjunction(page)):
             errors.append(message("site-link-redirection", "Site files cannot be symbolic links or junctions.", relative))
             continue
@@ -908,7 +908,7 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
             continue
         parser = SiteParser()
         parser.feed(html_text)
-        parsed_pages[page.resolve()] = parser
+        parsed_pages[relative] = (page, parser)
         for element in sorted(set(parser.unsafe_elements)):
             errors.append(message("active-content", f"Element '{element}' is not allowed.", relative))
         for handler in sorted(set(parser.event_handlers)):
@@ -924,8 +924,7 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
         if REQUIRED_CSP not in parser.csp_values:
             errors.append(message("invalid-csp", "Generated HTML must declare the exact ReportKit content security policy.", relative))
 
-    for page, parser in parsed_pages.items():
-        relative = page.relative_to(site).as_posix()
+    for relative, (page, parser) in parsed_pages.items():
         for tag, attribute, reference in parser.references:
             parsed = urlsplit(reference)
             if parsed.scheme or parsed.netloc or reference.startswith("//"):
@@ -946,7 +945,8 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
                 errors.append(message("broken-link", f"Reference '{reference}' does not resolve.", relative))
                 continue
             if parsed.fragment and target.suffix.lower() in {".html", ".htm"}:
-                target_parser = parsed_pages.get(target.resolve())
+                target_entry = parsed_pages.get(relative_site_path(site, target))
+                target_parser = target_entry[1] if target_entry is not None else None
                 if target_parser is None:
                     try:
                         target_parser = SiteParser()
@@ -958,9 +958,9 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
 
     manifest = _load_json_for_validation(manifest_path, errors) if manifest_path.is_file() else None
     validation = _load_json_for_validation(validation_path, errors) if validation_path.is_file() else None
-    actual_files = {path.relative_to(site).as_posix() for path in inventory_files}
+    actual_files = {relative_site_path(site, path) for path in inventory_files}
     for asset in inventory_files:
-        relative = asset.relative_to(site).as_posix()
+        relative = relative_site_path(site, asset)
         if asset.suffix.lower() == ".css":
             try:
                 css = asset.read_text(encoding="utf-8")
@@ -1027,7 +1027,7 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
                 if target is None:
                     errors.append(message("manifest-path", f"Unsafe manifest path '{file_name}'.", f"report-manifest.json.files[{file_index}]"))
                     continue
-                normalized = target.relative_to(site).as_posix()
+                normalized = relative_site_path(site, target)
                 if normalized in declared:
                     errors.append(message("manifest-duplicate-file", f"Duplicate manifest file '{normalized}'.", "report-manifest.json.files"))
                 declared.add(normalized)
@@ -1042,8 +1042,8 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
         if expected_item_count is not None and manifest.get("itemCount") != expected_item_count:
             errors.append(message("item-count-mismatch", f"Manifest itemCount is {manifest.get('itemCount')}; expected {expected_item_count}.", "report-manifest.json"))
         index_text = index.read_text(encoding="utf-8")
-        index_parser = parsed_pages.get(index)
-        artifact_counts = index_parser.item_counts if index_parser is not None else []
+        index_entry = parsed_pages.get("index.html")
+        artifact_counts = index_entry[1].item_counts if index_entry is not None else []
         if len(artifact_counts) != 1 or not artifact_counts[0].isdigit():
             errors.append(message(
                 "item-count-evidence",

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from json_schema import validate_instance
-from site_inventory import ALLOWED_SITE_SUFFIXES, _safe_component, inspect_site_inventory
+from site_inventory import ALLOWED_SITE_SUFFIXES, _safe_component, inspect_site_inventory, relative_site_path
 
 ROOT = Path(__file__).resolve().parents[1]
 _MANIFEST = "report-manifest.json"
@@ -78,7 +78,7 @@ def _artifact_digest(path: Path) -> str:
 def _inventory_paths(site: Path, files: list[Path]) -> dict[str, Path]:
     paths = {}
     for path in files:
-        relative = path.relative_to(site)
+        relative = Path(relative_site_path(site, path))
         if (
             not relative.parts
             or not all(_safe_component(component) for component in relative.parts)
