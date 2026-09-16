@@ -59,6 +59,10 @@ REQUIRED_CSP = (
 OUTPUT_MARKER = ".reportkit-output.json"
 
 
+def normalize_text_bytes(content: bytes) -> bytes:
+    return content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
 def load_json(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as stream:
         value = json.load(stream)
@@ -1169,7 +1173,7 @@ def build_site(
             "version": capability["version"],
             "kind": "built-in",
             "source": "repository",
-            "digest": f"sha256:{hashlib.sha256(capability_path.read_bytes()).hexdigest()}",
+            "digest": f"sha256:{hashlib.sha256(normalize_text_bytes(capability_path.read_bytes())).hexdigest()}",
         },
         "reportId": model["report"]["id"],
         "generatedAt": model["report"]["generatedAt"],

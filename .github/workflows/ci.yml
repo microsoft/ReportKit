@@ -18,7 +18,11 @@ jobs:
       - run: python -B -m unittest discover -s tests -v
 
   visual:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:bc6ab0d6d44ff4826e4cb8c1e6d801e185bfc42bb0753f8e2a30efc70db054c7
+    env:
+      REPORTKIT_SCREENSHOT_CHANNEL: chromium
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,8 +34,6 @@ jobs:
           cache: npm
           cache-dependency-path: tests/visual/package-lock.json
       - run: npm ci
-        working-directory: tests/visual
-      - run: npx playwright install --with-deps chromium
         working-directory: tests/visual
       - run: python -B scripts/prepare_marketing_pages.py
       - run: |
@@ -50,5 +52,13 @@ jobs:
             --output examples/custom-template-project/generated/release-review \
             --overwrite
       - run: node scripts/capture-screenshots.mjs
+      - name: Upload captures for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportkit-visual-captures
+          path: docs/assets/screenshots
+          retention-days: 7
+          if-no-files-found: error
       - name: Check generated and visual artifacts are current
         run: git diff --exit-code -- templates showcase examples/operational-snapshot/generated examples/custom-template-project/generated docs/assets/screenshots

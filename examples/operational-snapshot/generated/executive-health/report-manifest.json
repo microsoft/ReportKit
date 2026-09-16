@@ -15,7 +15,7 @@
   "reportKitVersion": "0.1.0",
   "schemaVersion": "1.0",
   "template": {
-    "digest": "sha256:17f12f8d949fe0c5bd6970e0328d870749b89bc4da7af03a70e5cd3853a497bc",
+    "digest": "sha256:84ab4c2d298c55ede9d419de0bd0e94077bbd2061822a4b94f21d022946fbf81",
     "id": "executive-health",
     "kind": "built-in",
     "source": "repository",

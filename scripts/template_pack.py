@@ -27,6 +27,7 @@ from reportkit_engine import (
     lexical_absolute_path,
     merge_reports,
     message,
+    normalize_text_bytes,
     prepare_output_paths,
     replace_output,
     validate_config,
@@ -162,7 +163,7 @@ def pack_digest(files: dict[str, bytes]) -> str:
     for name in sorted(files):
         content = files[name]
         if PurePosixPath(name).suffix.lower() in {".json", ".md", ".txt"} or not PurePosixPath(name).suffix:
-            content = content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+            content = normalize_text_bytes(content)
         digest.update(name.encode("utf-8"))
         digest.update(b"\0")
         digest.update(content)

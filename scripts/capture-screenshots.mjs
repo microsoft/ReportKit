@@ -16,12 +16,15 @@ const contract = JSON.parse(
 const outputRoot = path.join(root, "docs", "assets", "screenshots");
 await fs.mkdir(outputRoot, { recursive: true });
 
-let browser;
-try {
-  browser = await chromium.launch({ channel: "msedge", headless: true });
-} catch {
-  browser = await chromium.launch({ headless: true });
+const channel = process.env.REPORTKIT_SCREENSHOT_CHANNEL ?? "chromium";
+if (!["chromium", "msedge"].includes(channel)) {
+  throw new Error(`Unsupported screenshot browser channel: ${channel}`);
 }
+const browser = await chromium.launch({
+  ...(channel === "msedge" ? { channel } : {}),
+  headless: true,
+});
+console.log(`Screenshot browser: ${channel} ${browser.version()}; platform: ${process.platform}`);
 
 try {
   for (const capture of contract.captures) {

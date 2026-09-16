@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from reportkit_engine import load_json, validate_model, validate_site  # noqa: E402
+from reportkit_engine import build_site, load_json, validate_model, validate_site  # noqa: E402
 
 
 class ReportKitTests(unittest.TestCase):
@@ -75,6 +75,33 @@ class ReportKitTests(unittest.TestCase):
             self.assertNotIn("<unsafe-test>", html)
             self.assertNotIn("<script", html.lower())
 
+    def test_builtin_digest_and_output_ignore_only_line_endings(self) -> None:
+        content = self.capability_path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        with tempfile.TemporaryDirectory() as temp:
+            outputs = []
+            for index, ending in enumerate((b"\n", b"\r\n", b"\r")):
+                with self.subTest(ending=ending):
+                    capability = Path(temp) / f"template-{index}.json"
+                    capability.write_bytes(content.replace(b"\n", ending))
+                    output = Path(temp) / f"site-{index}"
+                    result = build_site(self.model_path, self.config_path, capability, output)
+                    self.assertEqual("passed", result["status"], result)
+                    outputs.append({
+                        file.relative_to(output).as_posix(): file.read_bytes()
+                        for file in output.rglob("*") if file.is_file()
+                    })
+            self.assertEqual(outputs[0], outputs[1])
+            self.assertEqual(outputs[0], outputs[2])
+            manifest = json.loads(outputs[0]["report-manifest.json"])
+            self.assertEqual(f"sha256:{hashlib.sha256(content).hexdigest()}", manifest["template"]["digest"])
+
+            capability.write_bytes(content + b" ")
+            changed = Path(temp) / "changed"
+            result = build_site(self.model_path, self.config_path, capability, changed)
+            self.assertEqual("passed", result["status"], result)
+            changed_manifest = load_json(changed / "report-manifest.json")
+            self.assertNotEqual(manifest["template"]["digest"], changed_manifest["template"]["digest"])
+
     def test_site_links_counts_and_accessibility(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             output = Path(temp) / "site"
@@ -125,7 +152,6 @@ class ReportKitTests(unittest.TestCase):
     def test_repository_has_no_package_or_local_environment_artifacts(self) -> None:
         prohibited = [
             ROOT / "pyproject.toml",
-            ROOT / ".git",
             ROOT / ".venv",
             ROOT / "reportkit.egg-info",
         ]

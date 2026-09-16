@@ -37,6 +37,7 @@ Changes must eventually include focused tests for:
 
 ## Pull requests
 
+See [CI and screenshot baselines](docs/ci.md) for reproducible captures and baseline updates.
+
 Keep changes focused and document any product-contract impact. Product-scope changes require an
 explicit design decision before implementation.
-
