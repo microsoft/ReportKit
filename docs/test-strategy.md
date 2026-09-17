@@ -2,7 +2,7 @@
 
 ## Purpose
 
-ReportKit turns operational facts into durable reports. Testing must protect more than code execution: generated reports must be factually faithful, deterministic, safe to publish, accessible, portable, and understandable by their intended audience.
+ReportKit turns operational facts into durable reports. Testing must protect more than code execution: generated reports must be factually faithful, deterministic, accessible, portable, and understandable by their intended audience. Publication safety is a target requiring additional security gates, not a guarantee of the current experimental release.
 
 This strategy defines three release levels:
 
@@ -35,6 +35,9 @@ python -B -m unittest discover -s tests -v
 - Deterministic built-in output, including the five-template canonical sample set.
 - HTML escaping and script-free generated output.
 - Generated-site links, counts, structure, classification, and freshness.
+- Case-insensitive duplicate-attribute rejection on every HTML element, including
+  rehashed CSP/image bypass fixtures. The browser gate demonstrates first-value parsing
+  with traffic intercepted, then confirms validation rejects the fixture before opening it.
 - Sensitive canonical field rejection.
 - Parseable and minimally aligned machine contracts.
 - Complete local HTML resource and fragment resolution across prototypes, companion pages, generated examples, and the showcase.

@@ -753,6 +753,7 @@ class SiteParser(HTMLParser):
         super().__init__()
         self.ids: set[str] = set()
         self.duplicate_ids: set[str] = set()
+        self.duplicate_attributes: set[tuple[str, str]] = set()
         self.references: list[tuple[str, str, str]] = []
         self.unsafe_elements: list[str] = []
         self.event_handlers: list[str] = []
@@ -768,7 +769,14 @@ class SiteParser(HTMLParser):
         self._style_chunks: list[str] | None = None
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        attributes = dict(attrs)
+        attributes: dict[str, str | None] = {}
+        for name, value in attrs:
+            name = name.lower()
+            if name in attributes:
+                self.duplicate_attributes.add((tag, name))
+            else:
+                # Browsers keep the first value; duplicates still fail validation.
+                attributes[name] = value
         if tag == "meta":
             http_equiv = str(attributes.get("http-equiv", "")).lower()
             if http_equiv == "content-security-policy":
@@ -1012,6 +1020,12 @@ def validate_site(site: Path, expected_item_count: int | None = None) -> dict[st
             errors.append(message("event-handler", f"Inline event handler '{handler}' is not allowed.", relative))
         for identifier in sorted(parser.duplicate_ids):
             errors.append(message("duplicate-html-id", f"Duplicate HTML ID '{identifier}'.", relative))
+        for tag, attribute in sorted(parser.duplicate_attributes):
+            errors.append(message(
+                "duplicate-html-attribute",
+                f"Duplicate attribute '{attribute}' on element '{tag}' is not allowed.",
+                relative,
+            ))
         if not parser.has_main or parser.h1_count != 1:
             errors.append(message("accessibility-structure", "Every page must contain main and exactly one h1.", relative))
         if not parser.has_classification:

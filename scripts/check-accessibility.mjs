@@ -1,5 +1,8 @@
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
+import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -22,7 +25,96 @@ const browser = await chromium.launch({ headless: true });
 console.log(`Accessibility browser: Chromium ${browser.version()}; platform: ${process.platform}`);
 const failures = [];
 
+async function checkDuplicateAttributeBoundary() {
+  const temporary = await fs.mkdtemp(path.join(await fs.realpath(os.tmpdir()), "reportkit-duplicate-"));
+  const contexts = [];
+  async function offlineContext() {
+    const context = await browser.newContext({ serviceWorkers: "block" });
+    contexts.push(context);
+    const requests = new Set();
+    await context.route("**/*", async (route) => {
+      if (["file:", "data:", "about:"].includes(new URL(route.request().url()).protocol)) {
+        await route.continue();
+      } else {
+        requests.add(route.request().url());
+        await route.abort("blockedbyclient");
+      }
+    });
+    return { context, requests };
+  }
+  async function openValidated(site, page) {
+    const result = spawnSync(process.env.REPORTKIT_PYTHON ?? "python",
+      ["-B", path.join(root, "scripts", "validate"), site, "--kind", "site"],
+      { encoding: "utf8" });
+    if (result.error) throw result.error;
+    if (![0, 1].includes(result.status)) throw new Error(`Validator failed: ${result.stderr}`);
+    const report = JSON.parse(result.stdout);
+    if ((result.status === 0) !== (report.errors.length === 0)) {
+      throw new Error("Validator exit status disagrees with its structured errors.");
+    }
+    if (result.status === 0) {
+      await page.goto(pathToFileURL(path.join(site, "index.html")).href, { waitUntil: "networkidle" });
+    }
+    return report;
+  }
+  try {
+    const site = path.join(temporary, "site");
+    await fs.cp(path.join(root, "examples", "operational-snapshot", "generated", "executive-health"),
+      site, { recursive: true });
+    const gated = await offlineContext();
+    const baselinePage = await gated.context.newPage();
+    const baseline = await openValidated(site, baselinePage);
+    if (baseline.errors.length || gated.requests.size || baselinePage.url() === "about:blank") {
+      throw new Error("Clean baseline must pass validation, open, and make zero external requests.");
+    }
+    await baselinePage.close();
+
+    const index = path.join(site, "index.html");
+    const original = await fs.readFile(index, "utf8");
+    const csp = original.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/);
+    if (!csp) throw new Error("Duplicate-attribute fixture requires the generated CSP.");
+    const tracker = "https://tracker.invalid/duplicate.png";
+    const malicious = original.replace(csp[0],
+      `<meta http-equiv="Content-Security-Policy" content="default-src *; img-src *" CONTENT="${csp[1]}">`)
+      .replace("</body>", `<img id="duplicate-probe" src="${tracker}" SRC="index.html" alt=""></body>`);
+    await fs.writeFile(index, malicious);
+    const manifestPath = path.join(site, "report-manifest.json");
+    const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+    manifest.reproducibility.artifactHashes["index.html"] =
+      `sha256:${createHash("sha256").update(await fs.readFile(index)).digest("hex")}`;
+    await fs.writeFile(manifestPath, JSON.stringify(manifest));
+
+    // Negative control: demonstrate browser first-value behavior, without sending traffic.
+    const control = await offlineContext();
+    const controlPage = await control.context.newPage();
+    await controlPage.setContent(malicious, { waitUntil: "networkidle" });
+    const interpreted = await controlPage.evaluate(() => ({
+      csp: document.querySelector('meta[http-equiv="Content-Security-Policy"]').content,
+      src: document.querySelector("#duplicate-probe").getAttribute("src"),
+    }));
+    if (interpreted.csp !== "default-src *; img-src *" ||
+        interpreted.src !== tracker || !control.requests.has(tracker)) {
+      throw new Error("Duplicate-attribute control did not exercise the browser parser disagreement.");
+    }
+    await controlPage.close();
+
+    const rejectedPage = await gated.context.newPage();
+    const report = await openValidated(site, rejectedPage);
+    if (report.status !== "failed" ||
+        report.errors.filter((issue) => issue.code === "duplicate-html-attribute").length !== 2 ||
+        report.errors.some((issue) => issue.code.startsWith("identity-")) ||
+        gated.requests.size || rejectedPage.url() !== "about:blank") {
+      throw new Error("Rehashed duplicate-attribute site must fail before opening, with zero external requests.");
+    }
+    console.log("PASS duplicate-attribute boundary: browser control blocked; rehashed site rejected before opening; zero gated external requests.");
+  } finally {
+    for (const context of contexts) await context.close();
+    await fs.rm(temporary, { recursive: true, force: true });
+  }
+}
+
 try {
+  await checkDuplicateAttributeBoundary();
   const adversarialContext = await browser.newContext({ serviceWorkers: "block" });
   const adversarialRequests = new Set();
   await adversarialContext.route("**/*", async (route) => {

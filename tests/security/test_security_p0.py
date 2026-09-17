@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import shutil
@@ -20,6 +21,8 @@ SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from reportkit_engine import (  # noqa: E402
+    REQUIRED_CSP,
+    SiteParser,
     load_json,
     replace_output,
     validate_config,
@@ -277,6 +280,71 @@ class P0SecurityTests(unittest.TestCase):
                 {"csp-placement", "unsafe-css", "external-css-resource", "external-svg-resource"}.issubset(codes),
                 report,
             )
+
+    def test_duplicate_attributes_are_rejected_on_all_elements(self) -> None:
+        cases = [
+            ('<div class="first" CLASS="second"></div>', "div", "class"),
+            ('<input disabled DISABLED/>', "input", "disabled"),
+            ('<img alt="first" alt="second"/>', "img", "alt"),
+            ('<svg><path d="" D=""/></svg>', "path", "d"),
+            ('<custom-element data-note="first" DATA-NOTE="second"/>', "custom-element", "data-note"),
+        ]
+        with tempfile.TemporaryDirectory() as temp:
+            site = Path(temp) / "site"
+            self.assertEqual(0, self.build(site).returncode)
+            index = site / "index.html"
+            original = index.read_text(encoding="utf-8")
+            manifest_path = site / "report-manifest.json"
+            manifest = load_json(manifest_path)
+            for markup, tag, attribute in cases:
+                with self.subTest(markup=markup):
+                    index.write_text(original.replace("</body>", markup + "</body>"), encoding="utf-8")
+                    manifest["reproducibility"]["artifactHashes"]["index.html"] = (
+                        "sha256:" + hashlib.sha256(index.read_bytes()).hexdigest()
+                    )
+                    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+                    report = validate_site(site, expected_item_count=401)
+                    self.assertEqual("failed", report["status"])
+                    self.assertEqual(
+                        [{"code": "duplicate-html-attribute",
+                          "message": f"Duplicate attribute '{attribute}' on element '{tag}' is not allowed.",
+                          "path": "index.html"}],
+                        report["errors"],
+                    )
+
+        parser = SiteParser()
+        parser.feed('<div class="first"></div><div class="second"></div>')
+        self.assertFalse(parser.duplicate_attributes)
+
+    def test_duplicate_csp_and_image_attributes_cannot_hide_external_resources(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            site = Path(temp) / "site"
+            self.assertEqual(0, self.build(site).returncode)
+            index = site / "index.html"
+            html = index.read_text(encoding="utf-8").replace(
+                f'content="{REQUIRED_CSP}"',
+                f'content="default-src *; img-src *" CONTENT="{REQUIRED_CSP}"',
+                1,
+            ).replace(
+                "</body>",
+                '<img src="https://tracker.invalid/duplicate.png" SRC="index.html"></body>',
+            )
+            index.write_text(html, encoding="utf-8")
+            manifest_path = site / "report-manifest.json"
+            manifest = load_json(manifest_path)
+            manifest["reproducibility"]["artifactHashes"]["index.html"] = (
+                "sha256:" + hashlib.sha256(index.read_bytes()).hexdigest()
+            )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            report = validate_site(site, expected_item_count=401)
+            self.assertEqual("failed", report["status"])
+            codes = {issue["code"] for issue in report["errors"]}
+            self.assertIn("duplicate-html-attribute", codes)
+            self.assertIn("invalid-csp", codes)
+            self.assertIn("unsafe-url", codes)
+            self.assertNotIn("identity-artifact-mismatch", codes)
+            duplicates = [issue for issue in report["errors"] if issue["code"] == "duplicate-html-attribute"]
+            self.assertEqual(2, len(duplicates))
 
     def test_malformed_validation_messages_status_and_html_are_structured(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

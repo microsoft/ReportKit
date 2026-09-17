@@ -141,7 +141,7 @@ Teams often already have the facts they need. The difficulty is turning those fa
 - Appropriate for a particular audience
 - Clear about freshness and reporting period
 - Consistent about status, ownership, dates, and units
-- Safe to publish
+- Inspectable before sharing, with validation results and explicit review
 - Useful without a backend
 - Easy to archive as a point-in-time record
 - Portable across SharePoint, file shares, artifacts, storage, and static hosting
