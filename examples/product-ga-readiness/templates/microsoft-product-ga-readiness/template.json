@@ -1,0 +1,53 @@
+{
+  "contractVersion": "1.0",
+  "id": "microsoft/product-ga-readiness",
+  "displayName": "Product GA Readiness",
+  "version": "1.0.0",
+  "description": "A single-page management decision report with a Drone view followed by owner-level readiness details.",
+  "audience": "Vice presidents, general managers, release approvers, and product leaders",
+  "primaryDecision": "Can the product proceed to general availability on the target date?",
+  "supportedSchemaVersions": ["1.0"],
+  "requiredSections": ["report", "metrics", "groups", "items"],
+  "requiredFields": [
+    "report.title",
+    "report.subtitle",
+    "report.status",
+    "report.statusLabel",
+    "report.statusSummary",
+    "report.generatedAt",
+    "report.dataAsOf",
+    "report.classification",
+    "metrics[].id",
+    "metrics[].label",
+    "metrics[].status",
+    "metrics[].statusLabel",
+    "groups[].id",
+    "groups[].label",
+    "groups[].type",
+    "items[].id",
+    "items[].title",
+    "items[].status",
+    "items[].statusText",
+    "items[].impact",
+    "items[].actionOwner",
+    "items[].groupIds",
+    "items[].nextAction"
+  ],
+  "optionalSections": ["highlights", "links"],
+  "supportedPageTypes": ["overview"],
+  "features": {
+    "multiPage": false,
+    "scriptFree": true,
+    "responsive": true,
+    "printable": true
+  },
+  "implementationCapabilities": {
+    "multiPage": false,
+    "scriptFree": true,
+    "responsive": true,
+    "printable": true
+  },
+  "compatibility": {
+    "minimumReportKitVersion": "0.1.0"
+  }
+}

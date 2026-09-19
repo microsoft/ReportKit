@@ -1,0 +1,13 @@
+{
+  "lockVersion": "1.0",
+  "templates": [
+    {
+      "id": "microsoft/product-ga-readiness",
+      "version": "1.0.0",
+      "kind": "declarative",
+      "source": "project",
+      "path": "templates/microsoft-product-ga-readiness",
+      "digest": "sha256:0163cfb21437c62b11d94d6ab05e1c518b67a23444a75f74046d2d26e078ac11"
+    }
+  ]
+}

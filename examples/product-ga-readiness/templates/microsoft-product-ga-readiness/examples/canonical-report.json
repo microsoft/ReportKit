@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "report": {
+    "id": "contoso-product-ga-readiness",
+    "title": "Contoso Product GA Readiness",
+    "subtitle": "Management view of product, platform, service, launch content, and partner readiness",
+    "generatedAt": "2026-09-19T18:00:00Z",
+    "dataAsOf": "2026-09-19T00:00:00Z",
+    "classification": "Public sample",
+    "status": "critical",
+    "statusLabel": "GA is AT RISK",
+    "statusSummary": "Product engineering is on track, but a platform dependency must close before approval.",
+    "period": { "label": "September 30, 2026 GA decision", "startDate": "2026-09-19", "endDate": "2026-09-30" }
+  },
+  "metrics": [
+    { "id": "product-gate", "label": "Product engineering", "value": 3, "unit": "of 3", "status": "healthy", "statusLabel": "ON TRACK", "description": "The primary release path is on track.", "order": 1 },
+    { "id": "platform-gate", "label": "Platform readiness", "value": 1, "unit": "of 2", "status": "critical", "statusLabel": "AT RISK", "description": "One required platform is blocked.", "order": 2 },
+    { "id": "docs-gate", "label": "Documentation", "value": "Not confirmed", "unit": "state", "status": "warning", "statusLabel": "UPDATE", "description": "Approval evidence is missing.", "order": 3 },
+    { "id": "days-to-target", "label": "Days to target", "value": 11, "unit": "days to GA", "status": "healthy", "statusLabel": "COUNTDOWN", "description": "September 30, 2026", "order": 999 }
+  ],
+  "groups": [
+    { "id": "primary-release-path", "label": "Primary release path", "type": "primary-release-path", "status": "healthy", "summary": "All product steps are on track.", "itemIds": ["dependency", "integration", "product"], "order": 1 },
+    { "id": "platform-readiness", "label": "Platform readiness", "type": "platform-readiness", "status": "blocked", "summary": "One platform is blocked.", "itemIds": ["platform"], "order": 2 },
+    { "id": "launch-readiness", "label": "Launch readiness", "type": "launch-readiness", "status": "warning", "summary": "Documentation needs evidence.", "itemIds": ["documentation"], "order": 3 }
+  ],
+  "items": [
+    { "id": "dependency", "title": "Authentication dependency", "summary": "Released for product consumption.", "status": "complete", "statusText": "Complete", "impact": "Released dependency", "priority": "high", "category": "build", "evidenceState": "verified", "actionOwner": { "team": "Identity team" }, "groupIds": ["primary-release-path"], "dueDate": "2026-09-16", "nextAction": "Maintain the released dependency.", "order": 1 },
+    { "id": "integration", "title": "Platform SDK integration", "summary": "Integration remains on track.", "status": "healthy", "statusText": "On Track", "impact": "Supports primary GA", "priority": "high", "category": "build", "evidenceState": "partial", "actionOwner": { "team": "SDK team" }, "groupIds": ["primary-release-path"], "dueDate": "2026-09-30", "nextAction": "Complete release sign-off.", "order": 2 },
+    { "id": "product", "title": "Primary product SDK", "summary": "Final packaging remains on track.", "status": "healthy", "statusText": "On Track", "impact": "Primary GA target", "priority": "critical", "category": "build", "evidenceState": "partial", "actionOwner": { "team": "Product team" }, "groupIds": ["primary-release-path"], "dueDate": "2026-09-30", "nextAction": "Publish the GA package.", "order": 3 },
+    { "id": "platform", "title": "Required secure platform", "summary": "Product validation is incomplete.", "status": "blocked", "statusText": "Blocked", "impact": "Confirmed GA blocker", "blocker": "Confirmed GA blocker", "priority": "critical", "category": "build", "evidenceState": "missing", "actionOwner": { "team": "Platform team" }, "groupIds": ["platform-readiness"], "dueDate": "2026-09-30", "nextAction": "Complete support and validate the product.", "order": 1 },
+    { "id": "documentation", "title": "GA documentation", "summary": "Draft and approval evidence are missing.", "status": "warning", "statusText": "Update Required", "impact": "Launch readiness gap", "priority": "high", "category": "requirement", "evidenceState": "missing", "actionOwner": { "displayName": "Unassigned" }, "groupIds": ["launch-readiness"], "dueDate": "2026-09-30", "nextAction": "Assign an owner and confirm publication.", "order": 1 }
+  ],
+  "highlights": [
+    { "id": "blocker-1", "title": "Required secure platform", "summary": "Product validation is incomplete.", "type": "risk", "status": "blocked", "groupIds": ["platform-readiness"], "itemIds": ["platform"], "order": 1 }
+  ],
+  "provenance": {
+    "adapter": { "id": "product-ga-readiness-sample", "version": "1.0.0" },
+    "sources": [{ "name": "Synthetic readiness workbook", "type": "synthetic", "recordCount": 5 }],
+    "recordCounts": { "raw": 5, "gates": 3, "groups": 3 }
+  }
+}

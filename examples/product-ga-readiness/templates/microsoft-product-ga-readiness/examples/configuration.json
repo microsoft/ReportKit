@@ -1,0 +1,7 @@
+{
+  "version": "1.0",
+  "template": { "id": "microsoft/product-ga-readiness", "version": "1.0.0" },
+  "theme": { "name": "Product GA Readiness", "primaryColor": "#1557B0" },
+  "freshnessThresholdsMinutes": { "fresh": 1440, "stale": 2880 },
+  "output": { "selfContained": true, "includePrototypeNotice": false }
+}

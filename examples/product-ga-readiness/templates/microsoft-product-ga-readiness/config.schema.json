@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "template"],
+  "properties": {
+    "version": { "const": "1.0" },
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "const": "microsoft/product-ga-readiness" },
+        "version": { "const": "1.0.0" }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "primaryColor": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+      }
+    },
+    "freshnessThresholdsMinutes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fresh": { "type": "integer", "minimum": 0, "maximum": 525600 },
+        "stale": { "type": "integer", "minimum": 0, "maximum": 525600 }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "selfContained": { "const": true },
+        "includePrototypeNotice": { "type": "boolean" }
+      }
+    }
+  }
+}

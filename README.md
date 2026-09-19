@@ -134,6 +134,29 @@ retains its identity across Windows and Linux checkouts.
 Custom configuration schemas use a bounded, restricted JSON Schema subset—not universal
 conformance. See [schema and pattern limits](docs/custom-templates-guided-build.md#configuration-schema-limits).
 
+### Build the Excel-driven Product GA Readiness report
+
+The included [`examples/product-ga-readiness`](examples/product-ga-readiness) project adds a
+single-page management report for GA decisions. Its governed Excel workbook owns the report facts,
+including identity, gates, milestones, decisions, adoption, owners, dates, evidence, and actions.
+
+```powershell
+python examples\product-ga-readiness\scripts\excel-to-reportkit.py `
+  --input examples\product-ga-readiness\Product-GA-Readiness-Input.xlsx `
+  --out-dir examples\product-ga-readiness
+
+python scripts\build-template `
+  --template examples\product-ga-readiness\templates\microsoft-product-ga-readiness `
+  --data examples\product-ga-readiness\canonical-report.json `
+  --config examples\product-ga-readiness\product-ga-readiness.config.json `
+  --lock examples\product-ga-readiness\reportkit.lock.json `
+  --output examples\product-ga-readiness\generated-site `
+  --overwrite
+```
+
+Open `examples\product-ga-readiness\generated-site\index.html`. To change the report, update the
+workbook and rerun the adapter and build; do not hand-edit generated JSON or HTML.
+
 ## Why ReportKit?
 
 Teams often already have the facts they need. The difficulty is turning those facts into a report that is:

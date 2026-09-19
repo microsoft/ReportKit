@@ -33,7 +33,9 @@
                     "metric-grid", "trend-visualization", "signal-list",
                     "attention-table", "group-card-grid", "empty-state",
                     "stale-data-warning", "partial-coverage-warning",
-                    "validation-warning-banner", "report-footer"
+                    "validation-warning-banner", "report-footer",
+                    "readiness-masthead", "readiness-drone-view",
+                    "readiness-progress-view", "readiness-detail-table"
                   ]
                 },
                 "source": { "enum": ["metrics", "trends", "highlights", "items", "groups"] },

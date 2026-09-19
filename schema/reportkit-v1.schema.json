@@ -97,6 +97,7 @@
         "value": { "type": ["number", "string"] },
         "unit": { "type": "string", "minLength": 1 },
         "status": { "$ref": "#/$defs/status" },
+        "statusLabel": { "type": "string" },
         "description": { "type": "string" },
         "target": { "type": ["number", "string", "null"] },
         "order": { "type": "integer" },
@@ -156,6 +157,7 @@
         "eta": { "type": ["string", "null"], "format": "date" },
         "etaHealth": { "enum": ["early", "on-track", "at-risk", "late", "unknown"] },
         "statusText": { "type": "string" },
+        "impact": { "type": "string" },
         "nextAction": { "type": "string" },
         "nextActionDate": { "type": ["string", "null"], "format": "date" },
         "blocker": { "type": ["string", "null"] },
@@ -176,7 +178,15 @@
         "status": { "$ref": "#/$defs/status" },
         "targetDate": { "type": ["string", "null"], "format": "date" },
         "completedDate": { "type": ["string", "null"], "format": "date" },
-        "summary": { "type": "string" }
+        "summary": { "type": "string" },
+        "statusText": { "type": "string" },
+        "progressPercent": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "milestoneType": { "type": "string" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "dependency": { "type": "string" },
+        "impact": { "type": "string" },
+        "nextAction": { "type": "string" },
+        "order": { "type": "integer" }
       }
     },
     "exception": {

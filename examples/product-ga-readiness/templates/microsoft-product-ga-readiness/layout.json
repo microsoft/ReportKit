@@ -1,0 +1,16 @@
+{
+  "layoutVersion": "1.0",
+  "pages": [
+    {
+      "id": "overview",
+      "path": "index.html",
+      "sections": [
+        { "component": "readiness-masthead" },
+        { "component": "readiness-drone-view" },
+        { "component": "readiness-progress-view" },
+        { "component": "readiness-detail-table", "source": "items" },
+        { "component": "report-footer" }
+      ]
+    }
+  ]
+}
