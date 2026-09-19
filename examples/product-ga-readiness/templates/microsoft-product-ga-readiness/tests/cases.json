@@ -1,0 +1,7 @@
+{
+  "cases": [
+    { "name": "minimum valid report", "input": "examples/minimum.json", "expected": "passed" },
+    { "name": "canonical valid report", "input": "examples/canonical-report.json", "expected": "passed" },
+    { "name": "missing report title", "mutation": "remove report.title", "expected": "failed" }
+  ]
+}

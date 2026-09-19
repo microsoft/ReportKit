@@ -1,0 +1,47 @@
+{
+  "classification": "Public sample",
+  "dataAsOf": "2026-10-20T00:00:00Z",
+  "files": [
+    ".reportkit-output.json",
+    "index.html",
+    "report-manifest.json",
+    "validation-report.json"
+  ],
+  "generatedAt": "2026-10-20T18:00:00Z",
+  "itemCount": 23,
+  "manifestVersion": "1.0",
+  "pageCount": 1,
+  "reportId": "contoso-product-ga-readiness",
+  "reportKitVersion": "0.1.0",
+  "reproducibility": {
+    "artifactHashes": {
+      ".reportkit-output.json": "sha256:58e5b5f2825663de42cad8c73206a071f85aae5664f8ff2e754f4892f3199658",
+      "index.html": "sha256:017af84c441a2765776807e81b767e75cc6593f24f01722a7960ee42f7139df2",
+      "validation-report.json": "sha256:874a9ad4c9cc2ead056d39acb17b3d8b7f4747f25324889141ca6e8ec44c6396"
+    },
+    "canonicalModelDigest": "sha256:f30d9735401f532f367dae7adc2632dab3b42fe13eb30c9f83b1c0d61fd6ec82",
+    "configurationDigest": "sha256:b20396553c1e19bbf7bed565a330bb939b372d34e7420821a4c313dbecb6733b",
+    "renderer": {
+      "digest": "sha256:d36d91edc2ba99eccee199ca164eeffa967b859c1a365cf8b3e9153e9723d259",
+      "id": "reportkit-python"
+    },
+    "sourceIdentifiers": [
+      "adapter:product-ga-readiness-excel@1.0.0",
+      "source:xlsx:Product-GA-Readiness-Input.xlsx"
+    ]
+  },
+  "schemaVersion": "1.0",
+  "template": {
+    "digest": "sha256:0163cfb21437c62b11d94d6ab05e1c518b67a23444a75f74046d2d26e078ac11",
+    "id": "microsoft/product-ga-readiness",
+    "kind": "declarative",
+    "source": "project",
+    "version": "1.0.0"
+  },
+  "validation": {
+    "errors": 0,
+    "info": 0,
+    "status": "passed",
+    "warnings": 0
+  }
+}

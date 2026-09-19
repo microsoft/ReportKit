@@ -12,6 +12,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
+from html import escape
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -265,6 +266,89 @@ class DeclarativeTemplatePackTests(unittest.TestCase):
                     any(issue["code"].startswith("pack-custom-json-schema-") for issue in report["errors"]),
                     report,
                 )
+
+
+class ProductGaReadinessTemplateTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.project = ROOT / "examples" / "product-ga-readiness"
+        cls.pack = cls.project / "templates" / "microsoft-product-ga-readiness"
+        cls.model = cls.project / "canonical-report.json"
+        cls.config = cls.project / "product-ga-readiness.config.json"
+        cls.lock = cls.project / "reportkit.lock.json"
+        cls.workbook = cls.project / "Product-GA-Readiness-Input.xlsx"
+        cls.adapter = cls.project / "scripts" / "excel-to-reportkit.py"
+
+    def test_pack_and_excel_generated_model_validate(self) -> None:
+        pack_report, pack = validate_pack(self.pack)
+        self.assertEqual("passed", pack_report["status"], pack_report)
+        self.assertIsNotNone(pack)
+        self.assertEqual([], validate_lock(self.lock, pack)["errors"])
+        model = load_json(self.model)
+        self.assertEqual("Product-GA-Readiness-Input.xlsx", model["provenance"]["sources"][0]["name"])
+        self.assertEqual(23, len(model["items"]))
+        self.assertEqual(8, len(model["report"]["outlookMilestones"]))
+
+    def test_excel_adapter_is_deterministic(self) -> None:
+        with tempfile.TemporaryDirectory() as first_temp, tempfile.TemporaryDirectory() as second_temp:
+            for output in (first_temp, second_temp):
+                result = subprocess.run(
+                    [
+                        sys.executable, "-B", str(self.adapter),
+                        "--input", str(self.workbook),
+                        "--out-dir", output,
+                    ],
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    check=False,
+                )
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+            for name in ("canonical-report.json", "product-ga-readiness.config.json"):
+                self.assertEqual(
+                    (Path(first_temp) / name).read_bytes(),
+                    (Path(second_temp) / name).read_bytes(),
+                )
+                self.assertEqual(
+                    load_json(self.project / name),
+                    load_json(Path(first_temp) / name),
+                )
+
+    def test_readiness_page_preserves_decision_and_detail_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "site"
+            report = build_pack_site(self.pack, self.model, self.config, output, self.lock)
+            self.assertEqual("passed", report["status"], report)
+            html = (output / "index.html").read_text(encoding="utf-8")
+            self.assertIn("Drone view", html)
+            self.assertIn("Execution view", html)
+            self.assertIn("Details view: GA readiness records", html)
+            self.assertIn("GA is AT RISK", html)
+            self.assertIn("2 CONFIRMED BLOCKERS", html)
+            self.assertIn("Contoso SDK Team", html)
+            self.assertIn("ON TRACK", html)
+            self.assertIn("Launch announcement", html)
+            self.assertIn("Audience &amp; client adoption", html)
+            details = html.split("Details view: GA readiness records", 1)[1].split("<footer", 1)[0]
+            model = load_json(self.model)
+            for item in model["items"]:
+                title_cell = f'<div class="ga-cell-title">{escape(item["title"])}</div>'
+                self.assertEqual(1, details.count(title_cell), item["id"])
+            self.assertNotIn("<script", html.lower())
+            self.assertIn("default-src 'none'; style-src 'unsafe-inline'", html)
+
+    def test_readiness_renderer_escapes_workbook_content(self) -> None:
+        pack_report, pack = validate_pack(self.pack)
+        self.assertFalse(pack_report["errors"], pack_report)
+        model = load_json(self.model)
+        model["report"]["title"] = '<script>alert("title")</script>'
+        model["items"][0]["nextAction"] = '<img src=x onerror="alert(1)">'
+        html = __import__("template_pack").render_pack(pack, model, load_json(self.config))
+        self.assertNotIn('<script>alert("title")</script>', html)
+        self.assertNotIn('<img src=x onerror="alert(1)">', html)
+        self.assertIn("&lt;script&gt;", html)
+        self.assertIn("&lt;img src=x", html)
 
 
 if __name__ == "__main__":

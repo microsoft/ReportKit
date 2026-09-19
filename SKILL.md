@@ -67,6 +67,7 @@ Recommend a template from the decision the report must support:
 | Portfolio / Team | Which teams carry the risk? | Build now |
 | Operational Health | What regressed or threatens reliability? | Build now |
 | Compliance / Readiness | Can the review or release proceed? | Build now |
+| Product GA Readiness | Can this product proceed to GA on its target date? | Build from the included governed Excel project |
 | Custom template | How should our organization communicate these facts? | Single-page declarative build |
 
 Use generated examples under `examples/operational-snapshot/generated/<template-id>/index.html`
@@ -81,6 +82,7 @@ Offer only the inputs supported by the current guided experience:
 - Canonical ReportKit JSON
 - Local source JSON that needs mapping
 - Local CSV that needs mapping
+- The included Product GA Readiness Excel workbook
 - Included public sample
 
 For source JSON or CSV, inspect the structure and propose a mapping. Confirm ambiguous required

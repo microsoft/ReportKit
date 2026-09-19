@@ -1,0 +1,17 @@
+{
+  "themeVersion": "1.0",
+  "name": "Product GA Readiness",
+  "tokens": {
+    "primary": "#1557B0",
+    "accent": "#B4232C",
+    "canvas": "#F3F6FB",
+    "surface": "#FFFFFF",
+    "fontFamily": "system"
+  },
+  "terminology": {
+    "group": "Workstream",
+    "item": "Readiness record",
+    "accountableOwner": "Accountable owner",
+    "actionOwner": "Owner"
+  }
+}

@@ -1,0 +1,955 @@
+{
+  "schemaVersion": "1.0",
+  "report": {
+    "id": "contoso-product-ga-readiness",
+    "title": "Contoso Product GA Readiness",
+    "subtitle": "Management view of product, platform, service, launch content, and customer readiness",
+    "generatedAt": "2026-10-20T18:00:00Z",
+    "dataAsOf": "2026-10-20T00:00:00Z",
+    "classification": "Public sample",
+    "status": "critical",
+    "statusLabel": "GA is AT RISK",
+    "statusSummary": "Product engineering is on track, but platform certification and production rollout must complete before approval.",
+    "period": {
+      "label": "October 30, 2026 GA decision",
+      "startDate": "2026-10-20",
+      "endDate": "2026-10-30"
+    },
+    "outlookMilestones": [
+      {
+        "id": "milestone-1",
+        "label": "Core dependency released",
+        "status": "complete",
+        "statusText": "Complete",
+        "progressPercent": 100,
+        "summary": "The dependency package is available for consumption.",
+        "milestoneType": "Release",
+        "impact": "Released dependency",
+        "dependency": "",
+        "nextAction": "Maintain release availability.",
+        "order": 1,
+        "owner": {
+          "displayName": "Contoso Identity Team"
+        },
+        "targetDate": "2026-10-15",
+        "completedDate": "2026-10-15"
+      },
+      {
+        "id": "milestone-2",
+        "label": "SDK integration complete",
+        "status": "healthy",
+        "statusText": "On Track",
+        "progressPercent": 85,
+        "summary": "Integration tests are passing.",
+        "milestoneType": "Integration",
+        "impact": "Supports primary GA",
+        "dependency": "Core dependency released",
+        "nextAction": "Complete release sign-off.",
+        "order": 2,
+        "owner": {
+          "displayName": "Contoso SDK Team"
+        },
+        "targetDate": "2026-10-24"
+      },
+      {
+        "id": "milestone-3",
+        "label": "Secure runtime certification",
+        "status": "blocked",
+        "statusText": "Blocked",
+        "progressPercent": 65,
+        "summary": "The final certification suite has not completed.",
+        "milestoneType": "Certification",
+        "impact": "Confirmed GA blocker",
+        "dependency": "Certification lab capacity",
+        "nextAction": "Complete certification and publish evidence.",
+        "order": 3,
+        "owner": {
+          "displayName": "Contoso Platform Team"
+        },
+        "targetDate": "2026-10-27"
+      },
+      {
+        "id": "milestone-4",
+        "label": "Production service rollout",
+        "status": "critical",
+        "statusText": "At Risk",
+        "progressPercent": 75,
+        "summary": "Canary validation passed; production rollout is pending.",
+        "milestoneType": "Deployment",
+        "impact": "Confirmed GA blocker",
+        "dependency": "Regional deployment approval",
+        "nextAction": "Deploy globally and validate telemetry.",
+        "order": 4,
+        "owner": {
+          "displayName": "Contoso Service Team"
+        },
+        "targetDate": "2026-10-28"
+      },
+      {
+        "id": "milestone-5",
+        "label": "GA documentation approved",
+        "status": "pending-review",
+        "statusText": "Pending Review",
+        "progressPercent": 70,
+        "summary": "Draft documentation is under review.",
+        "milestoneType": "Documentation",
+        "impact": "Launch readiness",
+        "dependency": "Engineering review",
+        "nextAction": "Obtain final approval and publish.",
+        "order": 5,
+        "owner": {
+          "displayName": "Contoso Content Team"
+        },
+        "targetDate": "2026-10-29"
+      },
+      {
+        "id": "milestone-6",
+        "label": "Release notes approved",
+        "status": "in-progress",
+        "statusText": "In Progress",
+        "progressPercent": 60,
+        "summary": "Release notes have entered review.",
+        "milestoneType": "Release notes",
+        "impact": "Launch readiness",
+        "dependency": "Release sign-off",
+        "nextAction": "Complete engineering approval.",
+        "order": 6,
+        "owner": {
+          "displayName": "Contoso Release Team"
+        },
+        "targetDate": "2026-10-29"
+      },
+      {
+        "id": "milestone-7",
+        "label": "Announcement scheduled",
+        "status": "in-progress",
+        "statusText": "In Progress",
+        "progressPercent": 50,
+        "summary": "A draft announcement and channel plan exist.",
+        "milestoneType": "Announcement",
+        "impact": "Launch readiness",
+        "dependency": "Messaging approval",
+        "nextAction": "Confirm approvers and publication time.",
+        "order": 7,
+        "owner": {
+          "displayName": "Contoso Communications"
+        },
+        "targetDate": "2026-10-30"
+      },
+      {
+        "id": "milestone-8",
+        "label": "Post-GA adoption checkpoint",
+        "status": "not-started",
+        "statusText": "Not Started",
+        "progressPercent": 0,
+        "summary": "The checkpoint is planned after GA.",
+        "milestoneType": "Adoption",
+        "impact": "Follow-on adoption",
+        "dependency": "GA publication",
+        "nextAction": "Confirm participating customers.",
+        "order": 8,
+        "owner": {
+          "displayName": "Contoso Customer Success"
+        },
+        "targetDate": "2026-11-13"
+      }
+    ]
+  },
+  "metrics": [
+    {
+      "id": "product-engineering",
+      "label": "Product engineering",
+      "value": "3 of 3",
+      "unit": "state",
+      "status": "healthy",
+      "statusLabel": "ON TRACK",
+      "description": "Core SDK work is complete or on track for the target date.",
+      "order": 1
+    },
+    {
+      "id": "platform-readiness",
+      "label": "Platform readiness",
+      "value": "1 of 2",
+      "unit": "state",
+      "status": "critical",
+      "statusLabel": "AT RISK",
+      "description": "One required secure runtime still needs certification.",
+      "order": 2
+    },
+    {
+      "id": "service-readiness",
+      "label": "Dependent service readiness",
+      "value": "Canary passed",
+      "unit": "state",
+      "status": "critical",
+      "statusLabel": "AT RISK",
+      "description": "The production rollout is not complete.",
+      "order": 3
+    },
+    {
+      "id": "documentation",
+      "label": "Documentation",
+      "value": "Draft ready",
+      "unit": "state",
+      "status": "warning",
+      "statusLabel": "UPDATE",
+      "description": "Final approval and publication evidence are required.",
+      "order": 4
+    },
+    {
+      "id": "release-notes",
+      "label": "Release notes",
+      "value": "In review",
+      "unit": "state",
+      "status": "warning",
+      "statusLabel": "UPDATE",
+      "description": "Engineering approval is still pending.",
+      "order": 5
+    },
+    {
+      "id": "announcement",
+      "label": "Launch announcement",
+      "value": "Scheduled",
+      "unit": "state",
+      "status": "in-progress",
+      "statusLabel": "IN PROGRESS",
+      "description": "Final messaging and channel confirmation remain open.",
+      "order": 6
+    },
+    {
+      "id": "days-to-target",
+      "label": "Days to target",
+      "value": 10,
+      "unit": "days to GA",
+      "status": "healthy",
+      "statusLabel": "COUNTDOWN",
+      "description": "October 30, 2026",
+      "order": 999
+    }
+  ],
+  "groups": [
+    {
+      "id": "primary-release-path",
+      "label": "Product engineering",
+      "type": "primary-release-path",
+      "status": "complete",
+      "summary": "All tracked items are ready or complete.",
+      "itemIds": [
+        "record-1",
+        "record-2",
+        "record-3"
+      ],
+      "managementAction": "Maintain readiness through the GA decision.",
+      "order": 1,
+      "accountableOwner": {
+        "displayName": "Contoso Engineering Leadership"
+      }
+    },
+    {
+      "id": "product-context",
+      "label": "Product context",
+      "type": "product-context",
+      "status": "complete",
+      "summary": "All tracked items are ready or complete.",
+      "itemIds": [
+        "record-4"
+      ],
+      "managementAction": "Maintain readiness through the GA decision.",
+      "order": 4,
+      "accountableOwner": {
+        "displayName": "Contoso Engineering Leadership"
+      }
+    },
+    {
+      "id": "platform-readiness",
+      "label": "Platform readiness",
+      "type": "platform-readiness",
+      "status": "blocked",
+      "summary": "1 item require attention.",
+      "itemIds": [
+        "record-5",
+        "record-6"
+      ],
+      "managementAction": "Complete certification and publish evidence.",
+      "order": 5,
+      "accountableOwner": {
+        "displayName": "Contoso Platform Leadership"
+      }
+    },
+    {
+      "id": "service-readiness",
+      "label": "Dependent service readiness",
+      "type": "service-readiness",
+      "status": "critical",
+      "summary": "1 item require attention.",
+      "itemIds": [
+        "record-7"
+      ],
+      "managementAction": "Deploy globally and validate telemetry.",
+      "order": 7,
+      "accountableOwner": {
+        "displayName": "Contoso Operations Leadership"
+      }
+    },
+    {
+      "id": "launch-readiness",
+      "label": "Launch readiness",
+      "type": "launch-readiness",
+      "status": "warning",
+      "summary": "3 items require attention.",
+      "itemIds": [
+        "record-8",
+        "record-9",
+        "record-10"
+      ],
+      "managementAction": "Obtain approval and publish.",
+      "order": 8,
+      "accountableOwner": {
+        "displayName": "Contoso Product Leadership"
+      }
+    },
+    {
+      "id": "decisions-support",
+      "label": "Decisions & support",
+      "type": "decisions-support",
+      "status": "pending-review",
+      "summary": "7 items require attention.",
+      "itemIds": [
+        "request-1",
+        "request-2",
+        "request-3",
+        "request-4",
+        "request-5",
+        "request-6",
+        "request-7"
+      ],
+      "managementAction": "Confirm the additional test window.",
+      "order": 11,
+      "accountableOwner": {
+        "displayName": "Contoso Platform Leadership"
+      }
+    },
+    {
+      "id": "audience-adoption",
+      "label": "Target audiences & client adoption",
+      "type": "audience-adoption",
+      "status": "blocked",
+      "summary": "4 items require attention.",
+      "itemIds": [
+        "audience-1",
+        "audience-2",
+        "audience-3",
+        "audience-4",
+        "audience-5",
+        "audience-6"
+      ],
+      "managementAction": "Close remaining test cases.",
+      "order": 18,
+      "accountableOwner": {
+        "displayName": "Contoso Customer Success"
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "record-1",
+      "title": "Core dependency",
+      "summary": "The dependency package is available for product consumption.",
+      "status": "complete",
+      "statusText": "Complete",
+      "priority": "high",
+      "category": "build",
+      "evidenceState": "verified",
+      "impact": "Released dependency",
+      "groupIds": [
+        "primary-release-path"
+      ],
+      "nextAction": "Maintain release availability.",
+      "order": 1,
+      "actionOwner": {
+        "displayName": "Contoso Identity Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Engineering Leadership"
+      },
+      "dueDate": "2026-10-15"
+    },
+    {
+      "id": "record-2",
+      "title": "SDK integration",
+      "summary": "Integration tests are passing.",
+      "status": "healthy",
+      "statusText": "On Track",
+      "priority": "high",
+      "category": "build",
+      "evidenceState": "partial",
+      "impact": "Supports primary GA",
+      "groupIds": [
+        "primary-release-path"
+      ],
+      "nextAction": "Complete release sign-off.",
+      "order": 2,
+      "actionOwner": {
+        "displayName": "Contoso SDK Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Product Leadership"
+      },
+      "dueDate": "2026-10-24"
+    },
+    {
+      "id": "record-3",
+      "title": "Contoso Secure SDK",
+      "summary": "Packaging and validation remain on track.",
+      "status": "healthy",
+      "statusText": "On Track",
+      "priority": "critical",
+      "category": "build",
+      "evidenceState": "partial",
+      "impact": "Primary GA target",
+      "groupIds": [
+        "primary-release-path"
+      ],
+      "nextAction": "Publish the GA package after approval.",
+      "order": 3,
+      "actionOwner": {
+        "displayName": "Contoso Product Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Product Leadership"
+      },
+      "dueDate": "2026-10-30"
+    },
+    {
+      "id": "record-4",
+      "title": "Contoso Policy Library",
+      "summary": "The supporting library is released.",
+      "status": "complete",
+      "statusText": "Complete",
+      "priority": "medium",
+      "category": "build",
+      "evidenceState": "verified",
+      "impact": "Supporting component",
+      "groupIds": [
+        "product-context"
+      ],
+      "nextAction": "Maintain compatibility.",
+      "order": 1,
+      "actionOwner": {
+        "displayName": "Contoso Policy Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Engineering Leadership"
+      },
+      "dueDate": "2026-10-15"
+    },
+    {
+      "id": "record-5",
+      "title": "Standard runtime",
+      "summary": "Validation is complete on the standard runtime.",
+      "status": "healthy",
+      "statusText": "Ready",
+      "priority": "high",
+      "category": "build",
+      "evidenceState": "verified",
+      "impact": "Supported platform ready",
+      "groupIds": [
+        "platform-readiness"
+      ],
+      "nextAction": "Maintain readiness through GA.",
+      "order": 1,
+      "actionOwner": {
+        "displayName": "Contoso Platform Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Platform Leadership"
+      },
+      "dueDate": "2026-10-30"
+    },
+    {
+      "id": "record-6",
+      "title": "Secure runtime",
+      "summary": "The final certification suite has not completed.",
+      "status": "blocked",
+      "statusText": "Blocked",
+      "priority": "critical",
+      "category": "build",
+      "evidenceState": "partial",
+      "impact": "Confirmed GA blocker",
+      "groupIds": [
+        "platform-readiness"
+      ],
+      "nextAction": "Complete certification and publish evidence.",
+      "order": 2,
+      "actionOwner": {
+        "displayName": "Contoso Platform Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Platform Leadership"
+      },
+      "dueDate": "2026-10-27",
+      "blocker": "Confirmed GA blocker"
+    },
+    {
+      "id": "record-7",
+      "title": "Production deployment service",
+      "summary": "Canary validation passed; production rollout is pending.",
+      "status": "critical",
+      "statusText": "At Risk",
+      "priority": "critical",
+      "category": "build",
+      "evidenceState": "submitted",
+      "impact": "Confirmed GA blocker",
+      "groupIds": [
+        "service-readiness"
+      ],
+      "nextAction": "Deploy globally and validate telemetry.",
+      "order": 1,
+      "actionOwner": {
+        "displayName": "Contoso Service Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Operations Leadership"
+      },
+      "dueDate": "2026-10-28",
+      "blocker": "Confirmed GA blocker"
+    },
+    {
+      "id": "record-8",
+      "title": "GA documentation",
+      "summary": "Final approval and publication evidence are missing.",
+      "status": "warning",
+      "statusText": "Update Required",
+      "priority": "high",
+      "category": "requirement",
+      "evidenceState": "partial",
+      "impact": "Launch readiness gap",
+      "groupIds": [
+        "launch-readiness"
+      ],
+      "nextAction": "Obtain approval and publish.",
+      "order": 1,
+      "actionOwner": {
+        "displayName": "Contoso Content Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Product Leadership"
+      },
+      "dueDate": "2026-10-29"
+    },
+    {
+      "id": "record-9",
+      "title": "Release notes",
+      "summary": "Engineering approval is pending.",
+      "status": "warning",
+      "statusText": "Update Required",
+      "priority": "high",
+      "category": "requirement",
+      "evidenceState": "partial",
+      "impact": "Launch readiness gap",
+      "groupIds": [
+        "launch-readiness"
+      ],
+      "nextAction": "Complete approval and publish.",
+      "order": 2,
+      "actionOwner": {
+        "displayName": "Contoso Release Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Engineering Leadership"
+      },
+      "dueDate": "2026-10-29"
+    },
+    {
+      "id": "record-10",
+      "title": "Launch announcement",
+      "summary": "Draft messaging and a channel plan exist.",
+      "status": "in-progress",
+      "statusText": "In Progress",
+      "priority": "medium",
+      "category": "requirement",
+      "evidenceState": "partial",
+      "impact": "Launch readiness gap",
+      "groupIds": [
+        "launch-readiness"
+      ],
+      "nextAction": "Confirm approvers and publication time.",
+      "order": 3,
+      "actionOwner": {
+        "displayName": "Contoso Communications"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Product Leadership"
+      },
+      "dueDate": "2026-10-30"
+    },
+    {
+      "id": "request-1",
+      "title": "Approve additional certification capacity",
+      "summary": "Capacity is the remaining constraint.",
+      "status": "pending-review",
+      "statusText": "Pending Review",
+      "priority": "critical",
+      "category": "decision",
+      "evidenceState": "partial",
+      "impact": "Unblock secure runtime certification",
+      "groupIds": [
+        "decisions-support"
+      ],
+      "nextAction": "Confirm the additional test window.",
+      "order": 1,
+      "actionOwner": {
+        "displayName": "Contoso Program Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Platform Leadership"
+      },
+      "dueDate": "2026-10-22"
+    },
+    {
+      "id": "request-2",
+      "title": "Confirm global rollout window",
+      "summary": "Canary evidence is available.",
+      "status": "in-progress",
+      "statusText": "In Progress",
+      "priority": "critical",
+      "category": "action",
+      "evidenceState": "partial",
+      "impact": "Commit the production deployment schedule",
+      "groupIds": [
+        "decisions-support"
+      ],
+      "nextAction": "Publish the approved rollout schedule.",
+      "order": 2,
+      "actionOwner": {
+        "displayName": "Contoso Service Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Operations"
+      },
+      "dueDate": "2026-10-23"
+    },
+    {
+      "id": "request-3",
+      "title": "Approve GA documentation",
+      "summary": "The draft is complete.",
+      "status": "pending-review",
+      "statusText": "Pending Review",
+      "priority": "medium",
+      "category": "decision",
+      "evidenceState": "partial",
+      "impact": "Authorize publication",
+      "groupIds": [
+        "decisions-support"
+      ],
+      "nextAction": "Record approval and publication date.",
+      "order": 3,
+      "actionOwner": {
+        "displayName": "Contoso Content Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Product Leadership"
+      },
+      "dueDate": "2026-10-27"
+    },
+    {
+      "id": "request-4",
+      "title": "Approve release notes",
+      "summary": "Technical review is underway.",
+      "status": "in-progress",
+      "statusText": "In Progress",
+      "priority": "medium",
+      "category": "action",
+      "evidenceState": "partial",
+      "impact": "Authorize release-note publication",
+      "groupIds": [
+        "decisions-support"
+      ],
+      "nextAction": "Complete review comments.",
+      "order": 4,
+      "actionOwner": {
+        "displayName": "Contoso Release Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Engineering"
+      },
+      "dueDate": "2026-10-27"
+    },
+    {
+      "id": "request-5",
+      "title": "Confirm announcement channel",
+      "summary": "Two channels are under consideration.",
+      "status": "not-started",
+      "statusText": "Not Started",
+      "priority": "medium",
+      "category": "action",
+      "evidenceState": "partial",
+      "impact": "Finalize the launch channel",
+      "groupIds": [
+        "decisions-support"
+      ],
+      "nextAction": "Select the launch channel.",
+      "order": 5,
+      "actionOwner": {
+        "displayName": "Contoso Communications"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Marketing"
+      },
+      "dueDate": "2026-10-28"
+    },
+    {
+      "id": "request-6",
+      "title": "Confirm support escalation coverage",
+      "summary": "Primary responders are identified.",
+      "status": "in-progress",
+      "statusText": "In Progress",
+      "priority": "medium",
+      "category": "decision",
+      "evidenceState": "partial",
+      "impact": "Confirm launch-day support coverage",
+      "groupIds": [
+        "decisions-support"
+      ],
+      "nextAction": "Publish the escalation roster.",
+      "order": 6,
+      "actionOwner": {
+        "displayName": "Contoso Support Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Operations"
+      },
+      "dueDate": "2026-10-28"
+    },
+    {
+      "id": "request-7",
+      "title": "Schedule the post-GA review",
+      "summary": "The review window is reserved.",
+      "status": "not-started",
+      "statusText": "Not Started",
+      "priority": "medium",
+      "category": "action",
+      "evidenceState": "partial",
+      "impact": "Create the follow-up governance checkpoint",
+      "groupIds": [
+        "decisions-support"
+      ],
+      "nextAction": "Send the review invitation.",
+      "order": 7,
+      "actionOwner": {
+        "displayName": "Contoso Program Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Product Team"
+      },
+      "dueDate": "2026-10-30"
+    },
+    {
+      "id": "audience-1",
+      "title": "Contoso Finance",
+      "summary": "Production validation is complete.",
+      "status": "complete",
+      "statusText": "Complete",
+      "priority": "medium",
+      "category": "deployment",
+      "evidenceState": "verified",
+      "impact": "Internal customer · Production validated · 100%",
+      "groupIds": [
+        "audience-adoption"
+      ],
+      "nextAction": "Monitor through GA.",
+      "order": 1,
+      "actionOwner": {
+        "displayName": "Contoso Customer Success"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Customer Success"
+      },
+      "dueDate": "2026-10-18"
+    },
+    {
+      "id": "audience-2",
+      "title": "Contoso Commerce",
+      "summary": "Pilot traffic is healthy.",
+      "status": "healthy",
+      "statusText": "On Track",
+      "priority": "medium",
+      "category": "deployment",
+      "evidenceState": "partial",
+      "impact": "Internal customer · Pilot · 80%",
+      "groupIds": [
+        "audience-adoption"
+      ],
+      "nextAction": "Complete production sign-off.",
+      "order": 2,
+      "actionOwner": {
+        "displayName": "Contoso Customer Success"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Customer Success"
+      },
+      "dueDate": "2026-10-25"
+    },
+    {
+      "id": "audience-3",
+      "title": "Contoso Analytics",
+      "summary": "Integration tests are running.",
+      "status": "in-progress",
+      "statusText": "In Progress",
+      "priority": "medium",
+      "category": "deployment",
+      "evidenceState": "partial",
+      "impact": "Internal customer · Integration · 60%",
+      "groupIds": [
+        "audience-adoption"
+      ],
+      "nextAction": "Close remaining test cases.",
+      "order": 3,
+      "actionOwner": {
+        "displayName": "Contoso Adoption Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Adoption Team"
+      },
+      "dueDate": "2026-10-30"
+    },
+    {
+      "id": "audience-4",
+      "title": "Fabrikam Services",
+      "summary": "A compatibility issue remains open.",
+      "status": "critical",
+      "statusText": "At Risk",
+      "priority": "medium",
+      "category": "deployment",
+      "evidenceState": "partial",
+      "impact": "Design partner · Pilot · 45%",
+      "groupIds": [
+        "audience-adoption"
+      ],
+      "nextAction": "Resolve the compatibility issue.",
+      "order": 4,
+      "actionOwner": {
+        "displayName": "Contoso Partner Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Partner Team"
+      },
+      "dueDate": "2026-11-06"
+    },
+    {
+      "id": "audience-5",
+      "title": "Northwind Platform",
+      "summary": "The partner depends on secure runtime certification.",
+      "status": "blocked",
+      "statusText": "Blocked",
+      "priority": "medium",
+      "category": "deployment",
+      "evidenceState": "partial",
+      "impact": "Design partner · Planning · 20%",
+      "groupIds": [
+        "audience-adoption"
+      ],
+      "nextAction": "Resume after certification completes.",
+      "order": 5,
+      "actionOwner": {
+        "displayName": "Contoso Partner Team"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Partner Team"
+      },
+      "dueDate": "2026-11-13"
+    },
+    {
+      "id": "audience-6",
+      "title": "Public developer audience",
+      "summary": "Publication is scheduled for GA day.",
+      "status": "not-started",
+      "statusText": "Not Started",
+      "priority": "medium",
+      "category": "deployment",
+      "evidenceState": "partial",
+      "impact": "External audience · Announcement · 0%",
+      "groupIds": [
+        "audience-adoption"
+      ],
+      "nextAction": "Finalize the announcement package.",
+      "order": 6,
+      "actionOwner": {
+        "displayName": "Contoso Communications"
+      },
+      "accountableOwner": {
+        "displayName": "Contoso Communications"
+      },
+      "dueDate": "2026-10-30"
+    }
+  ],
+  "trends": [
+    {
+      "id": "confirmed-ga-blockers",
+      "label": "Confirmed GA blockers",
+      "unit": "blockers",
+      "status": "critical",
+      "observations": [
+        {
+          "date": "2026-10-20",
+          "value": 2,
+          "label": "Current daily snapshot"
+        }
+      ],
+      "order": 1
+    }
+  ],
+  "highlights": [
+    {
+      "id": "blocker-1",
+      "title": "Secure runtime",
+      "summary": "The final certification suite has not completed.",
+      "type": "risk",
+      "status": "blocked",
+      "itemIds": [
+        "record-6"
+      ],
+      "groupIds": [
+        "platform-readiness"
+      ],
+      "order": 1
+    },
+    {
+      "id": "blocker-2",
+      "title": "Production deployment service",
+      "summary": "Canary validation passed; production rollout is pending.",
+      "type": "risk",
+      "status": "critical",
+      "itemIds": [
+        "record-7"
+      ],
+      "groupIds": [
+        "service-readiness"
+      ],
+      "order": 2
+    }
+  ],
+  "links": [],
+  "provenance": {
+    "adapter": {
+      "id": "product-ga-readiness-excel",
+      "version": "1.0.0"
+    },
+    "sources": [
+      {
+        "name": "Product-GA-Readiness-Input.xlsx",
+        "type": "xlsx",
+        "retrievedAt": "2026-10-20T18:00:00Z",
+        "recordCount": 31
+      }
+    ],
+    "recordCounts": {
+      "raw": 31,
+      "gates": 6,
+      "groups": 7,
+      "milestones": 8,
+      "decisions": 7,
+      "audiences": 6
+    }
+  }
+}

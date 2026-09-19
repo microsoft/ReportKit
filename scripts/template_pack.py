@@ -85,6 +85,10 @@ COMPONENTS: dict[str, dict[str, set[str]]] = {
     "partial-coverage-warning": {"sources": set(), "variants": set(), "selections": set()},
     "validation-warning-banner": {"sources": set(), "variants": set(), "selections": set()},
     "report-footer": {"sources": set(), "variants": set(), "selections": set()},
+    "readiness-masthead": {"sources": set(), "variants": set(), "selections": set()},
+    "readiness-drone-view": {"sources": set(), "variants": set(), "selections": set()},
+    "readiness-progress-view": {"sources": set(), "variants": set(), "selections": set()},
+    "readiness-detail-table": {"sources": {"items"}, "variants": set(), "selections": set()},
 }
 
 
@@ -576,10 +580,264 @@ def validate_lock(lock_path: Path, pack: dict[str, Any]) -> dict[str, Any]:
     return validation_report(errors)
 
 
+def _readiness_status_class(status: str | None) -> str:
+    if status in {"healthy", "complete", "passed"}:
+        return "green"
+    if status in {"critical", "blocked", "failed"}:
+        return "red"
+    if status in {"warning", "in-progress", "pending-review", "not-started"}:
+        return "amber"
+    return "muted"
+
+
+def _readiness_badge(status: str | None, label: str | None = None) -> str:
+    text = label or (status or "unknown").replace("-", " ").title()
+    return f'<span class="ga-badge ga-badge--{_readiness_status_class(status)}">{escape(text)}</span>'
+
+
+def _readiness_date(value: str | None) -> str:
+    if not value:
+        return "—"
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").strftime("%b %-d")
+    except ValueError:
+        try:
+            return datetime.strptime(value, "%Y-%m-%d").strftime("%b %#d")
+        except ValueError:
+            return value
+
+
+def _readiness_is_open(item: dict[str, Any]) -> bool:
+    return item.get("status") not in {"healthy", "complete", "passed", "not-applicable"}
+
+
+def _readiness_is_confirmed_blocker(item: dict[str, Any]) -> bool:
+    blocker_text = f"{item.get('blocker', '')} {item.get('impact', '')}".lower()
+    return _readiness_is_open(item) and "confirmed ga blocker" in blocker_text
+
+
+def _readiness_grouped_items(model: dict[str, Any]) -> list[tuple[str, list[dict[str, Any]]]]:
+    items = sorted(model.get("items", []), key=lambda item: (item.get("order", 9999), item["id"]))
+    groups = sorted(model.get("groups", []), key=lambda group: (group.get("order", 9999), group["id"]))
+    seen: set[str] = set()
+    result: list[tuple[str, list[dict[str, Any]]]] = []
+    for group in groups:
+        group_items = [
+            item for item in items
+            if item["id"] not in seen and (
+                group["id"] in item.get("groupIds", [])
+                or item["id"] in group.get("itemIds", [])
+            )
+        ]
+        if group_items:
+            seen.update(item["id"] for item in group_items)
+            result.append((group["label"], group_items))
+    remaining = [item for item in items if item["id"] not in seen]
+    if remaining:
+        result.append(("Other readiness records", remaining))
+    return result
+
+
+def _render_readiness_masthead(model: dict[str, Any], freshness_class: str, freshness_label: str) -> str:
+    report = model["report"]
+    return (
+        '<header class="ga-topbar"><div class="ga-brand">'
+        '<div class="ga-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>'
+        f'<div><h1>{escape(report["title"])}</h1><p class="ga-subtitle">{escape(report.get("subtitle", ""))}</p></div></div>'
+        f'<div class="ga-meta">Data as of {escape(_format_datetime(report["dataAsOf"]))}<br>'
+        f'Generated {escape(_format_datetime(report["generatedAt"]))}<br>'
+        f'<span class="classification">{escape(report["classification"])}</span> · '
+        f'<span class="freshness {escape(freshness_class)}">{escape(freshness_label)}</span></div></header>'
+    )
+
+
+def _render_readiness_drone_view(model: dict[str, Any]) -> str:
+    report = model["report"]
+    blockers = [item for item in model.get("items", []) if _readiness_is_confirmed_blocker(item)]
+    blockers = sorted(blockers, key=_priority_sort)
+    blocker_cards = "".join(
+        f'<article class="ga-blocker"><div class="ga-blocker-title">{index} · {escape(item["title"])}</div>'
+        f'<div class="ga-blocker-note">{escape(item.get("summary", ""))}</div></article>'
+        for index, item in enumerate(blockers, 1)
+    )
+    blocker_label = f'{len(blockers)} CONFIRMED BLOCKER{"S" if len(blockers) != 1 else ""}'
+    countdown = next((metric for metric in model.get("metrics", []) if metric["id"] == "days-to-target"), None)
+    gates = sorted(
+        (metric for metric in model.get("metrics", []) if metric["id"] != "days-to-target"),
+        key=lambda metric: (metric.get("order", 9999), metric["id"]),
+    )
+    gate_cards = "".join(
+        '<article class="ga-gate"><div class="ga-gate-top">'
+        f'<span class="ga-gate-title">{escape(metric["label"])}</span>'
+        f'{_readiness_badge(metric.get("status"), metric.get("statusLabel"))}</div>'
+        f'<div class="ga-gate-value">{escape(str(metric["value"]))}'
+        f'{(" " + escape(metric["unit"])) if metric.get("unit") not in (None, "", "state") else ""}</div>'
+        f'<div class="ga-gate-note">{escape(metric.get("description", ""))}</div></article>'
+        for metric in gates
+    )
+    primary_group = next(
+        (group for group in model.get("groups", []) if group.get("type") == "primary-release-path"),
+        None,
+    )
+    primary_items = []
+    if primary_group:
+        primary_items = [
+            item for item in sorted(model.get("items", []), key=lambda item: (item.get("order", 9999), item["id"]))
+            if primary_group["id"] in item.get("groupIds", []) or item["id"] in primary_group.get("itemIds", [])
+        ]
+    path_steps = ""
+    for index, item in enumerate(primary_items):
+        if index:
+            path_steps += '<span class="ga-arrow" aria-hidden="true">→</span>'
+        primary_class = " ga-primary-step" if index == len(primary_items) - 1 else ""
+        path_steps += (
+            f'<article class="ga-step{primary_class}"><div class="ga-step-name">{escape(item["title"])}</div>'
+            f'{_readiness_badge(item.get("status"), item.get("statusText"))}'
+            f'<div class="ga-step-detail">{escape(item.get("summary", ""))}</div></article>'
+        )
+    if not path_steps:
+        path_steps = '<p class="ga-help">No primary release path supplied.</p>'
+    unassigned = [
+        item for item in model.get("items", [])
+        if item.get("priority") in {"critical", "high"}
+        and _owner_label(item.get("actionOwner")).strip().lower() == "unassigned"
+    ]
+    actions: list[dict[str, Any]] = []
+    for item in blockers + sorted(unassigned, key=_priority_sort):
+        if item["id"] not in {action["id"] for action in actions}:
+            actions.append(item)
+    action_cards = "".join(
+        '<article class="ga-action"><span aria-hidden="true">›</span><div>'
+        f'<div class="ga-action-title">{escape(item["title"])}</div>'
+        f'<div class="ga-action-note">{escape(item.get("nextAction") or "Review required")}</div></div></article>'
+        for item in actions[:3]
+    ) or '<p class="ga-help">No management actions require attention.</p>'
+    launch_gaps = [
+        item["title"] for item in model.get("items", [])
+        if "gap" in item.get("impact", "").lower() and _readiness_is_open(item)
+    ]
+    launch_gap = (
+        f'<p class="ga-launch-gap"><strong>Launch gaps:</strong> {escape(", ".join(launch_gaps))} still require confirmed readiness evidence.</p>'
+        if launch_gaps else ""
+    )
+    countdown_html = (
+        f'<aside class="ga-countdown" aria-label="{escape(countdown["label"])}">'
+        f'<div class="ga-countdown-value">{escape(str(countdown["value"]))}</div>'
+        f'<div class="ga-countdown-label">{escape(countdown["unit"])}</div></aside>'
+        if countdown else ""
+    )
+    period = report.get("period", {}).get("label", "GA decision")
+    return (
+        '<div class="ga-view-heading"><h2 id="ga-drone-heading">Drone view</h2>'
+        '<span class="ga-help">Bird’s-eye view of the GA decision</span></div>'
+        '<section aria-labelledby="ga-drone-heading"><section class="ga-hero" aria-labelledby="ga-overall-heading"><div>'
+        f'<div class="ga-eyebrow">{escape(period)}</div><div class="ga-hero-title">'
+        f'<strong id="ga-overall-heading">{escape(report.get("statusLabel", report.get("status", "unknown").title()))}</strong>'
+        f'{_readiness_badge("critical" if blockers else report.get("status"), blocker_label)}</div>'
+        f'<p class="ga-summary">{escape(report.get("statusSummary", ""))}</p>'
+        f'<div class="ga-blockers" aria-label="Confirmed GA blockers">{blocker_cards}</div>{launch_gap}</div>'
+        f'{countdown_html}</section><section class="ga-gates" aria-label="GA readiness gates">{gate_cards}</section>'
+        '<section class="ga-main"><article class="ga-panel"><div class="ga-panel-heading">'
+        f'<h2>{escape(primary_group["label"] if primary_group else "Primary release path")}</h2>'
+        f'{_readiness_badge(primary_group.get("status") if primary_group else "unknown")}</div>'
+        f'<div class="ga-path">{path_steps}</div></article>'
+        '<aside class="ga-panel"><div class="ga-panel-heading"><h2>Management actions</h2></div>'
+        f'<div class="ga-list">{action_cards}</div></aside></section></section>'
+    )
+
+
+def _render_readiness_progress_view(model: dict[str, Any]) -> str:
+    milestones = sorted(
+        model["report"].get("outlookMilestones", []),
+        key=lambda item: (item.get("order", 9999), item["id"]),
+    )
+    decisions = []
+    adoption = []
+    for item in sorted(model.get("items", []), key=lambda item: (item.get("order", 9999), item["id"])):
+        groups = set(item.get("groupIds", []))
+        if "decisions-support" in groups:
+            decisions.append(item)
+        if "audience-adoption" in groups:
+            adoption.append(item)
+    milestone_rows = "".join(
+        '<article class="ga-progress-row"><div class="ga-progress-top"><div>'
+        f'<div class="ga-cell-title">{escape(item["label"])}</div>'
+        f'<div class="ga-cell-note">{escape(item.get("milestoneType", "Milestone"))} · {escape(_owner_label(item.get("owner")))}</div></div>'
+        f'{_readiness_badge(item.get("status"), item.get("statusText"))}</div>'
+        f'<div class="ga-progress-track"><span style="width:{max(0, min(100, item.get("progressPercent", 0)))}%"></span></div>'
+        f'<div class="ga-progress-meta"><span>{item.get("progressPercent", 0)}%</span>'
+        f'<span>{escape(_readiness_date(item.get("completedDate") or item.get("targetDate")))}</span></div>'
+        f'<p class="ga-progress-note">{escape(item.get("summary", ""))}</p></article>'
+        for item in milestones
+    ) or '<p class="ga-help">No milestones supplied.</p>'
+    decision_rows = "".join(
+        '<article class="ga-progress-row"><div class="ga-progress-top"><div>'
+        f'<div class="ga-cell-title">{escape(item["title"])}</div>'
+        f'<div class="ga-cell-note">Owner: {escape(_owner_label(item.get("actionOwner")))} · Due: {escape(_readiness_date(item.get("dueDate")))}</div></div>'
+        f'{_readiness_badge(item.get("status"), item.get("statusText"))}</div>'
+        f'<p class="ga-progress-note">{escape(item.get("nextAction") or "Review required")}</p></article>'
+        for item in decisions
+    ) or '<p class="ga-help">No decisions or support requests supplied.</p>'
+    adoption_rows = "".join(
+        '<article class="ga-progress-row"><div class="ga-progress-top"><div>'
+        f'<div class="ga-cell-title">{escape(item["title"])}</div>'
+        f'<div class="ga-cell-note">{escape(item.get("impact", ""))} · {escape(_owner_label(item.get("actionOwner")))}</div></div>'
+        f'{_readiness_badge(item.get("status"), item.get("statusText"))}</div>'
+        f'<p class="ga-progress-note">{escape(item.get("summary", ""))}</p>'
+        f'<p class="ga-progress-note"><strong>Next:</strong> {escape(item.get("nextAction") or "Review required")}</p></article>'
+        for item in adoption
+    ) or '<p class="ga-help">No audience or client adoption records supplied.</p>'
+    return (
+        '<section class="ga-progress-flow" aria-labelledby="ga-progress-heading">'
+        '<div class="ga-view-heading"><h2 id="ga-progress-heading">Execution view</h2>'
+        '<span class="ga-help">Milestones, decisions, support, and adoption work</span></div>'
+        '<div class="ga-progress-grid">'
+        f'<section class="ga-panel"><div class="ga-panel-heading"><h2>Key milestones</h2><span class="ga-help">{len(milestones)} tracked</span></div><div class="ga-list">{milestone_rows}</div></section>'
+        f'<section class="ga-panel"><div class="ga-panel-heading"><h2>Decisions &amp; support needed</h2><span class="ga-help">{len(decisions)} tracked</span></div><div class="ga-list">{decision_rows}</div></section>'
+        f'<section class="ga-panel"><div class="ga-panel-heading"><h2>Audience &amp; client adoption</h2><span class="ga-help">{len(adoption)} tracked</span></div><div class="ga-list">{adoption_rows}</div></section>'
+        '</div></section>'
+    )
+
+
+def _render_readiness_detail_table(model: dict[str, Any]) -> str:
+    rows = ""
+    for label, items in _readiness_grouped_items(model):
+        rows += f'<tr class="ga-group-row"><td colspan="7">{escape(label)}</td></tr>'
+        for item in items:
+            rows += (
+                f'<tr><td><div class="ga-cell-title">{escape(item["title"])}</div>'
+                f'<div class="ga-cell-note">{escape(item.get("category", "other").replace("-", " ").title())}</div></td>'
+                f'<td>{_readiness_badge(item.get("status"), item.get("statusText"))}</td>'
+                f'<td class="ga-owner">{escape(_owner_label(item.get("actionOwner")))}</td>'
+                f'<td>{escape(_readiness_date(item.get("dueDate") or item.get("eta")))}</td>'
+                f'<td>{escape(item.get("impact", ""))}</td><td>{escape(item.get("summary", ""))}</td>'
+                f'<td class="ga-next">{escape(item.get("nextAction") or "Review required")}</td></tr>'
+            )
+    blockers = sum(1 for item in model.get("items", []) if _readiness_is_confirmed_blocker(item))
+    blocker_label = f'{blockers} CONFIRMED BLOCKER{"S" if blockers != 1 else ""}'
+    return (
+        '<section class="ga-detail-flow" aria-labelledby="ga-details-heading"><section class="ga-panel ga-table-panel">'
+        '<div class="ga-panel-heading"><div><h2 id="ga-details-heading">Details view: GA readiness records</h2>'
+        '<div class="ga-help">Excel-backed records · owners and status updated daily</div></div>'
+        f'{_readiness_badge("critical" if blockers else "healthy", blocker_label)}</div>'
+        '<div class="ga-table-wrap"><table aria-label="GA readiness owners, status, targets, impact, evidence, and next actions">'
+        '<thead><tr><th>Item</th><th>Status</th><th>Owner</th><th>Target</th><th>GA impact</th>'
+        f'<th>Current evidence</th><th>Next action</th></tr></thead><tbody>{rows}</tbody></table></div></section></section>'
+    )
+
+
 def _render_component(component: dict[str, Any], model: dict[str, Any], terms: dict[str, str]) -> str:
     name = component["component"]
     if name in {"report-masthead", "freshness-panel", "report-footer"}:
         return ""
+    if name == "readiness-masthead":
+        return ""
+    if name == "readiness-drone-view":
+        return _render_readiness_drone_view(model)
+    if name == "readiness-progress-view":
+        return _render_readiness_progress_view(model)
+    if name == "readiness-detail-table":
+        return _render_readiness_detail_table(model)
     if name == "overall-status":
         report = model["report"]
         return (
@@ -654,6 +912,14 @@ def render_pack(pack: dict[str, Any], model: dict[str, Any], config: dict[str, A
     report = model["report"]
     freshness_class, freshness_label = _freshness(model, config)
     primary = config.get("theme", {}).get("primaryColor", tokens["primary"])
+    readiness = any(section["component"].startswith("readiness-") for section in page["sections"])
+    if readiness:
+        masthead = _render_readiness_masthead(model, freshness_class, freshness_label)
+        return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="description" content="{escape(report.get('subtitle', report['title']))}"><title>{escape(report['title'])} | {escape(template['displayName'])}</title><style>
+:root{{color-scheme:light dark;--ga-bg:light-dark({tokens['canvas']},#0b1020);--ga-surface:light-dark({tokens['surface']},#151c2e);--ga-surface-2:light-dark(#f8fafc,#1b2438);--ga-text:light-dark(#172033,#f2f6ff);--ga-muted:light-dark(#5d687a,#aeb9cc);--ga-line:light-dark(#d9e1ec,#33415b);--ga-blue:light-dark({primary},#78aef9);--ga-blue-soft:light-dark(#eaf2ff,#172a49);--ga-green:light-dark(#137a43,#70d39a);--ga-green-soft:light-dark(#e8f7ef,#153527);--ga-amber:light-dark(#9a5b00,#f6c76a);--ga-amber-soft:light-dark(#fff4d7,#3b2c10);--ga-red:light-dark({tokens['accent']},#ff8c94);--ga-red-soft:light-dark(#ffebec,#421b22);--ga-muted-soft:light-dark(#edf1f5,#263148);--ga-shadow:light-dark(0 12px 30px rgba(21,46,83,.08),0 12px 30px rgba(0,0,0,.22))}}*{{box-sizing:border-box}}body{{margin:0;background:var(--ga-bg);color:var(--ga-text);font:16px/1.5 "Segoe UI",Arial,sans-serif}}.ga-shell{{width:min(calc(100% - 36px),1180px);margin:auto;padding:22px 0}}h1,h2,h3,p{{margin:0}}h1{{font-size:1.28rem;font-weight:500}}h2{{font-size:1rem;font-weight:500}}.ga-topbar{{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}}.ga-brand{{display:flex;align-items:center;gap:12px;min-width:0}}.ga-mark{{width:32px;height:32px;display:grid;grid-template-columns:1fr 1fr;gap:2px;flex:0 0 auto}}.ga-mark span:nth-child(1){{background:#f25022}}.ga-mark span:nth-child(2){{background:#7fba00}}.ga-mark span:nth-child(3){{background:#00a4ef}}.ga-mark span:nth-child(4){{background:#ffb900}}.ga-subtitle,.ga-meta,.ga-help{{color:var(--ga-muted)}}.ga-subtitle{{margin-top:3px}}.ga-meta{{text-align:right;white-space:nowrap;font-size:.82rem;line-height:1.45}}.classification{{font-weight:600}}.freshness{{font-weight:700}}.freshness.fresh{{color:var(--ga-green)}}.freshness.warning{{color:var(--ga-amber)}}.freshness.critical{{color:var(--ga-red)}}.ga-view-heading{{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin:2px 0 10px}}.ga-view-heading h2{{font-size:1.12rem}}.ga-hero{{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;background:var(--ga-surface);border:1px solid var(--ga-line);box-shadow:var(--ga-shadow);border-radius:14px;padding:22px}}.ga-eyebrow{{color:var(--ga-blue);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600}}.ga-hero-title{{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:7px 0 10px}}.ga-hero-title strong{{font-size:1.55rem;font-weight:500}}.ga-summary{{max-width:800px;color:var(--ga-muted);line-height:1.5}}.ga-blockers{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:15px}}.ga-blocker{{background:var(--ga-red-soft);border-radius:10px;padding:12px}}.ga-blocker-title{{color:var(--ga-red);font-weight:600}}.ga-blocker-note{{margin-top:4px;font-size:.82rem;line-height:1.4}}.ga-launch-gap{{color:var(--ga-muted);margin-top:11px;font-size:.84rem}}.ga-countdown{{min-width:150px;padding-left:22px;border-left:1px solid var(--ga-line);text-align:right}}.ga-countdown-value{{font-size:2.2rem;font-weight:500;line-height:1}}.ga-countdown-label{{color:var(--ga-muted);margin-top:5px}}.ga-badge{{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;white-space:nowrap;font-size:.74rem;font-weight:600;text-transform:uppercase}}.ga-badge::before{{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}}.ga-badge--green{{color:var(--ga-green);background:var(--ga-green-soft)}}.ga-badge--amber{{color:var(--ga-amber);background:var(--ga-amber-soft)}}.ga-badge--red{{color:var(--ga-red);background:var(--ga-red-soft)}}.ga-badge--muted{{color:var(--ga-muted);background:var(--ga-muted-soft)}}.ga-gates{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}}.ga-gate{{background:var(--ga-surface);border:1px solid var(--ga-line);border-radius:12px;padding:15px;min-width:0}}.ga-gate-top{{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}}.ga-gate-title{{font-weight:600}}.ga-gate-value{{margin-top:14px;font-size:1.45rem;font-weight:500}}.ga-gate-note{{color:var(--ga-muted);margin-top:5px;line-height:1.35;font-size:.82rem}}.ga-main{{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(290px,.85fr);gap:14px;margin-top:14px}}.ga-panel{{background:var(--ga-surface);border:1px solid var(--ga-line);border-radius:12px;padding:18px;min-width:0}}.ga-panel-heading{{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}}.ga-path{{display:flex;gap:10px;align-items:stretch}}.ga-step{{background:var(--ga-surface-2);padding:14px;border-radius:10px;min-width:0;flex:1}}.ga-primary-step{{background:var(--ga-blue-soft)}}.ga-step-name,.ga-action-title,.ga-cell-title{{font-weight:600}}.ga-step-detail,.ga-action-note,.ga-cell-note{{color:var(--ga-muted);font-size:.8rem;line-height:1.4;margin-top:7px}}.ga-arrow{{align-self:center;color:var(--ga-muted);font-size:1.25rem}}.ga-list{{display:grid;gap:11px}}.ga-action{{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px}}.ga-action>span{{color:var(--ga-blue);font-size:1.4rem;line-height:1}}.ga-progress-flow,.ga-detail-flow{{margin-top:30px;padding-top:22px;border-top:1px solid var(--ga-line)}}.ga-progress-grid{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}}.ga-progress-row{{background:var(--ga-surface-2);border-radius:10px;padding:12px}}.ga-progress-top{{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}}.ga-progress-track{{height:6px;background:var(--ga-line);border-radius:999px;overflow:hidden;margin-top:10px}}.ga-progress-track span{{display:block;height:100%;background:var(--ga-blue);border-radius:inherit}}.ga-progress-meta{{display:flex;justify-content:space-between;gap:12px;color:var(--ga-muted);font-size:.72rem;margin-top:5px}}.ga-progress-note{{color:var(--ga-muted);font-size:.78rem;line-height:1.4;margin-top:8px}}.ga-table-panel{{padding:18px}}.ga-table-wrap{{overflow-x:auto}}table{{width:100%;border-collapse:collapse;min-width:1080px}}th{{text-align:left;color:var(--ga-muted);font-size:.72rem;font-weight:600;text-transform:uppercase;padding:9px 10px;border-bottom:1px solid var(--ga-line)}}td{{padding:11px 10px;border-bottom:1px solid var(--ga-line);vertical-align:top}}tbody tr:last-child td{{border-bottom:0}}.ga-group-row td{{background:var(--ga-surface-2);color:var(--ga-blue);font-weight:600;padding-top:10px;padding-bottom:10px}}.ga-owner{{min-width:170px}}.ga-next{{min-width:220px}}.ga-footer{{display:flex;justify-content:space-between;gap:16px;color:var(--ga-muted);font-size:.76rem;margin-top:14px;padding:0 2px}}@media(max-width:980px){{.ga-main,.ga-progress-grid{{grid-template-columns:1fr}}}}@media(max-width:720px){{.ga-shell{{width:min(calc(100% - 28px),1180px);padding:14px 0}}.ga-topbar{{align-items:flex-start;flex-direction:column}}.ga-meta{{text-align:left}}.ga-hero{{grid-template-columns:1fr;align-items:flex-start}}.ga-countdown{{border-left:0;border-top:1px solid var(--ga-line);padding:14px 0 0;text-align:left;width:100%}}.ga-blockers,.ga-gates{{grid-template-columns:1fr}}.ga-path{{flex-direction:column}}.ga-arrow{{transform:rotate(90deg);align-self:center}}.ga-footer{{flex-direction:column}}}}@media print{{:root{{color-scheme:light}}body{{background:#fff}}.ga-panel,.ga-gate,.ga-hero{{box-shadow:none}}}}
+</style></head><body data-template="{escape(template['id'])}" data-template-version="{escape(template['version'])}" data-item-count="{len(model.get('items', []))}"><main id="main" class="ga-shell">{masthead}{sections}<footer class="ga-footer"><span>{escape(report['id'])} · {escape(template['id'])}@{escape(template['version'])}</span><span>{escape(pack['digest'])}</span></footer></main></body></html>"""
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="description" content="{escape(report.get('subtitle', report['title']))}"><title>{escape(report['title'])} | {escape(template['displayName'])}</title><style>

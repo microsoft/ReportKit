@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "report": {
+    "id": "product-ga-minimum",
+    "title": "Product GA Readiness",
+    "subtitle": "Minimum valid management decision report",
+    "generatedAt": "2026-09-19T18:00:00Z",
+    "dataAsOf": "2026-09-19T00:00:00Z",
+    "classification": "Public sample",
+    "status": "warning",
+    "statusLabel": "GA decision pending",
+    "statusSummary": "One readiness item requires confirmation.",
+    "period": { "label": "September 30, 2026 GA decision", "startDate": "2026-09-19", "endDate": "2026-09-30" }
+  },
+  "metrics": [
+    { "id": "gate-1", "label": "Product engineering", "value": "On track", "unit": "state", "status": "healthy", "statusLabel": "ON TRACK", "description": "Engineering remains on track.", "order": 1 },
+    { "id": "days-to-target", "label": "Days to target", "value": 11, "unit": "days to GA", "status": "healthy", "statusLabel": "COUNTDOWN", "description": "September 30, 2026", "order": 999 }
+  ],
+  "groups": [
+    { "id": "primary-release-path", "label": "Primary release path", "type": "primary-release-path", "status": "healthy", "summary": "The primary path is on track.", "itemIds": ["item-1"], "order": 1 }
+  ],
+  "items": [
+    { "id": "item-1", "title": "Primary product", "summary": "The release candidate is ready for final approval.", "status": "healthy", "statusText": "On Track", "impact": "Primary GA target", "priority": "high", "category": "build", "evidenceState": "verified", "actionOwner": { "team": "Product team" }, "groupIds": ["primary-release-path"], "dueDate": "2026-09-30", "nextAction": "Complete final approval.", "order": 1 }
+  ],
+  "provenance": {
+    "adapter": { "id": "product-ga-readiness-sample", "version": "1.0.0" },
+    "sources": [{ "name": "Synthetic readiness workbook", "type": "synthetic", "recordCount": 1 }],
+    "recordCounts": { "raw": 1 }
+  }
+}
