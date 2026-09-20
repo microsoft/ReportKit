@@ -1,4 +1,6 @@
-# ReportKit
+# Microsoft ReportKit
+
+> **Project status and disclaimer:** ReportKit is an experimental open-source Hack Week project. It is not an official Microsoft product or service and is not covered by Microsoft commercial support, service-level agreements, or product lifecycle commitments. Its interfaces, templates, and behavior may change without notice. Evaluate security, privacy, accessibility, compliance, and operational requirements before using it in production. Public examples must contain synthetic data only.
 
 > From operational data to a durable report—without building another dashboard.
 
@@ -1098,3 +1100,5 @@ When evaluating any new feature, return to the architectural test:
 > The destination determines where the generated report lives.
 
 If a feature violates those boundaries, it belongs in another layer—or outside ReportKit v1.
+
+> **Disclaimer:** ReportKit is an experimental Hack Week project and is not an official Microsoft product, service, or supported offering.
